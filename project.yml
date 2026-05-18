@@ -1,0 +1,65 @@
+name: RightClickBuddy
+options:
+  deploymentTarget:
+    macOS: "13.0"
+  bundleIdPrefix: com.karry
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "-"
+
+schemes:
+  RightClickBuddy:
+    build:
+      targets:
+        RightClickBuddy: all
+
+packages: {}
+
+targets:
+  RightClickBuddy:
+    type: application
+    platform: macOS
+    sources:
+      - path: App
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.karry.RightClickBuddy
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: RightClickBuddy
+        INFOPLIST_KEY_LSUIElement: YES
+        INFOPLIST_KEY_NSHumanReadableCopyright: ""
+        CODE_SIGN_ENTITLEMENTS: App/RightClickBuddy.entitlements
+    dependencies:
+      - target: RightClickBuddyFinderSync
+
+  RightClickBuddyFinderSync:
+    type: app-extension
+    platform: macOS
+    productName: RightClickBuddyFinderSync
+    sources:
+      - path: FinderSync
+      - path: Shared
+    info:
+      path: FinderSync/Info.plist
+      properties:
+        CFBundleDisplayName: RightClickBuddyFinderSync
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.FinderSync
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).FinderSync
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.karry.RightClickBuddy.FinderSync
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: FinderSync/Info.plist
+        CODE_SIGN_ENTITLEMENTS: FinderSync/RightClickBuddyFinderSync.entitlements
+        # Finder Sync extensions require sandbox
+        ENABLE_APP_SANDBOX: YES
+        # Enable Finder Sync capability
+        COMBINE_HIDPI_IMAGES: YES
