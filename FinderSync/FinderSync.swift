@@ -656,7 +656,6 @@ final class FinderSync: FIFinderSync {
             createOfficeMenu.addItem(createPptxItem)
 
             let createOfficeSubmenuItem = NSMenuItem(title: "新建 Office 文档 / New Office", action: nil, keyEquivalent: "")
-            addSeparatorIfNeeded(menu)
             menu.addItem(createOfficeSubmenuItem)
             menu.setSubmenu(createOfficeMenu, for: createOfficeSubmenuItem)
         }
