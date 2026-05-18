@@ -1,0 +1,20 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Xcode
+*.xcuserstate
+xcuserdata/
+DerivedData/
+
+# Build
+.build/
+dist/
+
+# IDE
+.idea/
+*.swp
+*.swo
