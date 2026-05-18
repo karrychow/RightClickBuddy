@@ -430,31 +430,12 @@ final class FinderSync: FIFinderSync {
 
         logger.info("menu(for:) kind=\(menuKind.rawValue) targeted=\(targeted?.path ?? "nil", privacy: .public) selectedCount=\(selected?.count ?? 0)")
 
-        // Root menu returned to Finder.
-        // NOTE: Some Finder locations (notably File Provider / iCloud Drive roots) may choose not to
-        // render FinderSync-provided items unless the menu contains at least one explicit action item.
-        // We add a no-op header item as an anchor, then populate actions at the top level.
         let menu = NSMenu(title: "RightClickBuddy")
-
-        let headerItem = NSMenuItem(title: "RightClickBuddy", action: #selector(noopTopLevelMenuItem(_:)), keyEquivalent: "")
-        headerItem.target = self
-        headerItem.isEnabled = true
-        menu.addItem(headerItem)
-        menu.addItem(NSMenuItem.separator())
 
         #if DEBUG
         defer {
             let titles = menu.items.map { $0.title }.joined(separator: " | ")
             logger.info("menu return kind=\(menuKind.rawValue) itemCount=\(menu.items.count) titles=\(titles, privacy: .public)")
-        }
-        #endif
-
-        #if DEBUG
-        if let stamp = debugBuildStamp() {
-            let stampItem = NSMenuItem(title: stamp, action: nil, keyEquivalent: "")
-            stampItem.isEnabled = false
-            menu.addItem(stampItem)
-            menu.addItem(NSMenuItem.separator())
         }
         #endif
 
@@ -775,9 +756,6 @@ final class FinderSync: FIFinderSync {
         return menu
     }
 
-    @objc private func noopTopLevelMenuItem(_ sender: Any?) {
-        // Intentionally no-op. Some Finder contexts may drop menus whose top-level items have no actions.
-    }
 
     /// For copy actions we prefer the full multi-selection when available.
     private func currentSelectedURLs() -> [URL] {
@@ -1383,29 +1361,5 @@ final class FinderSync: FIFinderSync {
         }
     }
 
-    #if DEBUG
-    private func debugBuildStamp() -> String? {
-        let bundle = Bundle.main
-        let short = (bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String) ?? "?"
-        let build = (bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String) ?? "?"
 
-        guard let exeURL = bundle.executableURL else {
-            return "DBG v\(short)(\(build))"
-        }
-
-        let mtime: String = {
-            if let attrs = try? FileManager.default.attributesOfItem(atPath: exeURL.path),
-               let date = attrs[.modificationDate] as? Date {
-                let f = DateFormatter()
-                f.dateFormat = "MM-dd HH:mm:ss"
-                return f.string(from: date)
-            }
-            return "?"
-        }()
-
-        // Keep it short to avoid huge menus.
-        return "DBG v\(short)(\(build)) \(mtime)"
-    }
-    #endif
 }
-
