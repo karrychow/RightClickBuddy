@@ -631,11 +631,6 @@ final class FinderSync: FIFinderSync {
             menu.setSubmenu(createMenu, for: createSubmenuItem)
         }
 
-        func addSeparatorIfNeeded(_ menu: NSMenu) {
-            if let last = menu.items.last, last.isSeparatorItem { return }
-            if menu.items.isEmpty { return }
-            menu.addItem(NSMenuItem.separator())
-        }
 
         if settings.menu.showOffice {
             let createOfficeMenu = NSMenu(title: "Office")
@@ -743,13 +738,10 @@ final class FinderSync: FIFinderSync {
 
             if !openWithMenu.items.isEmpty {
                 let openWithSubmenuItem = NSMenuItem(title: "打开方式 / Open With", action: nil, keyEquivalent: "")
-                addSeparatorIfNeeded(menu)
                 menu.addItem(openWithSubmenuItem)
                 menu.setSubmenu(openWithMenu, for: openWithSubmenuItem)
             }
         }
-
-        addSeparatorIfNeeded(menu)
 
         let copyDirItem = NSMenuItem(title: "复制当前目录 / Copy Current Directory", action: #selector(copyCurrentDirectory(_:)), keyEquivalent: "")
         if let creationDirectory { copyDirItem.representedObject = creationDirectory }
@@ -758,8 +750,6 @@ final class FinderSync: FIFinderSync {
 
         menu.addItem(NSMenuItem(title: "复制路径 / Copy POSIX Path", action: #selector(copyPath), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "复制文件名 / Copy Filename", action: #selector(copyFilename), keyEquivalent: ""))
-
-        menu.addItem(NSMenuItem.separator())
 
         let terminalDirItem = NSMenuItem(title: "在当前目录打开终端 / Open Terminal Here", action: #selector(openTerminalHere(_:)), keyEquivalent: "")
         if let creationDirectory { terminalDirItem.representedObject = creationDirectory }
