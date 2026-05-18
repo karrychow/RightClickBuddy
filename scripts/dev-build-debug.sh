@@ -14,6 +14,7 @@ xcodebuild \
   -configuration Debug \
   -derivedDataPath "$DERIVED_DATA" \
   -destination "platform=macOS" \
+  CODE_SIGNING_ALLOWED=NO \
   build
 
 APP_PATH="$DERIVED_DATA/Build/Products/Debug/$SCHEME.app"
