@@ -430,7 +430,7 @@ final class FinderSync: FIFinderSync {
 
         logger.info("menu(for:) kind=\(menuKind.rawValue) targeted=\(targeted?.path ?? "nil", privacy: .public) selectedCount=\(selected?.count ?? 0)")
 
-        let menu = NSMenu(title: "RightClickBuddy")
+        let menu = NSMenu(title: RCLocalizedString("RightClickBuddy"))
 
         #if DEBUG
         defer {
@@ -512,79 +512,79 @@ final class FinderSync: FIFinderSync {
         }
 
         if settings.menu.showNew {
-            let createMenu = NSMenu(title: "新建 / New")
+            let createMenu = NSMenu(title: RCLocalizedString("新建"))
 
-            let createFolderItem = NSMenuItem(title: "新建文件夹 / Folder", action: #selector(createNewFolder(_:)), keyEquivalent: "")
+            let createFolderItem = NSMenuItem(title: RCLocalizedString("新建文件夹"), action: #selector(createNewFolder(_:)), keyEquivalent: "")
             if let creationDirectory { createFolderItem.representedObject = creationDirectory }
             createFolderItem.isEnabled = (creationDirectory != nil)
             createMenu.addItem(createFolderItem)
             createMenu.addItem(NSMenuItem.separator())
 
-            let createTxtItem = NSMenuItem(title: "新建文本 / Text (.txt)", action: #selector(createNewTextFile(_:)), keyEquivalent: "")
+            let createTxtItem = NSMenuItem(title: RCLocalizedString("新建文本 (txt)"), action: #selector(createNewTextFile(_:)), keyEquivalent: "")
             if let creationDirectory { createTxtItem.representedObject = creationDirectory }
             createTxtItem.isEnabled = (creationDirectory != nil)
             createMenu.addItem(createTxtItem)
 
-            let createMdItem = NSMenuItem(title: "新建 Markdown (.md)", action: #selector(createNewMarkdownFile(_:)), keyEquivalent: "")
+            let createMdItem = NSMenuItem(title: RCLocalizedString("新建 Markdown (.md)"), action: #selector(createNewMarkdownFile(_:)), keyEquivalent: "")
             if let creationDirectory { createMdItem.representedObject = creationDirectory }
             createMdItem.isEnabled = (creationDirectory != nil)
             createMenu.addItem(createMdItem)
 
-            let createJsonItem = NSMenuItem(title: "新建 JSON (.json)", action: #selector(createNewJSONFile(_:)), keyEquivalent: "")
+            let createJsonItem = NSMenuItem(title: RCLocalizedString("新建 JSON (.json)"), action: #selector(createNewJSONFile(_:)), keyEquivalent: "")
             if let creationDirectory { createJsonItem.representedObject = creationDirectory }
             createJsonItem.isEnabled = (creationDirectory != nil)
             createMenu.addItem(createJsonItem)
 
-            let createShItem = NSMenuItem(title: "新建 Shell (.sh)", action: #selector(createNewShellScript(_:)), keyEquivalent: "")
+            let createShItem = NSMenuItem(title: RCLocalizedString("新建 Shell (.sh)"), action: #selector(createNewShellScript(_:)), keyEquivalent: "")
             if let creationDirectory { createShItem.representedObject = creationDirectory }
             createShItem.isEnabled = (creationDirectory != nil)
             createMenu.addItem(createShItem)
 
-            let createEnvItem = NSMenuItem(title: "新建 .env", action: #selector(createNewDotEnvFile(_:)), keyEquivalent: "")
+            let createEnvItem = NSMenuItem(title: RCLocalizedString("新建 .env"), action: #selector(createNewDotEnvFile(_:)), keyEquivalent: "")
             if let creationDirectory { createEnvItem.representedObject = creationDirectory }
             createEnvItem.isEnabled = (creationDirectory != nil)
             createMenu.addItem(createEnvItem)
 
-            let createPagesItem = NSMenuItem(title: "新建 Pages 文档 (.pages)", action: #selector(createNewPagesDocument(_:)), keyEquivalent: "")
+            let createPagesItem = NSMenuItem(title: RCLocalizedString("新建 Pages 文档 (.pages)"), action: #selector(createNewPagesDocument(_:)), keyEquivalent: "")
             if let creationDirectory { createPagesItem.representedObject = creationDirectory }
             createPagesItem.isEnabled = (creationDirectory != nil) && canCreatePagesDocument
             createMenu.addItem(createPagesItem)
 
             createMenu.addItem(NSMenuItem.separator())
 
-            let pasteTextItem = NSMenuItem(title: "从剪贴板新建文本 / Paste as Text (.txt)", action: #selector(createTextFromPasteboard(_:)), keyEquivalent: "")
+            let pasteTextItem = NSMenuItem(title: RCLocalizedString("从剪贴板新建文本 (txt)"), action: #selector(createTextFromPasteboard(_:)), keyEquivalent: "")
             if let creationDirectory { pasteTextItem.representedObject = creationDirectory }
             pasteTextItem.isEnabled = (creationDirectory != nil)
             createMenu.addItem(pasteTextItem)
 
-            let pasteImageItem = NSMenuItem(title: "从剪贴板新建图片 / Paste as PNG (.png)", action: #selector(createPNGFromPasteboard(_:)), keyEquivalent: "")
+            let pasteImageItem = NSMenuItem(title: RCLocalizedString("从剪贴板新建图片 (png)"), action: #selector(createPNGFromPasteboard(_:)), keyEquivalent: "")
             if let creationDirectory { pasteImageItem.representedObject = creationDirectory }
             pasteImageItem.isEnabled = (creationDirectory != nil)
             createMenu.addItem(pasteImageItem)
 
-            let createNumbersItem = NSMenuItem(title: "新建 Numbers 表格 (.numbers)", action: #selector(createNewNumbersDocument(_:)), keyEquivalent: "")
+            let createNumbersItem = NSMenuItem(title: RCLocalizedString("新建 Numbers 表格 (.numbers)"), action: #selector(createNewNumbersDocument(_:)), keyEquivalent: "")
             if let creationDirectory { createNumbersItem.representedObject = creationDirectory }
             createNumbersItem.isEnabled = (creationDirectory != nil) && canCreateNumbersDocument
             createMenu.addItem(createNumbersItem)
 
-            let createKeynoteItem = NSMenuItem(title: "新建 Keynote 演示文稿 (.key)", action: #selector(createNewKeynoteDocument(_:)), keyEquivalent: "")
+            let createKeynoteItem = NSMenuItem(title: RCLocalizedString("新建 Keynote 演示文稿 (.key)"), action: #selector(createNewKeynoteDocument(_:)), keyEquivalent: "")
             if let creationDirectory { createKeynoteItem.representedObject = creationDirectory }
             createKeynoteItem.isEnabled = (creationDirectory != nil) && canCreateKeynoteDocument
             createMenu.addItem(createKeynoteItem)
 
             if settings.menu.showTemplates {
-                let templatesMenu = NSMenu(title: "模板 / Templates")
+                let templatesMenu = NSMenu(title: RCLocalizedString("模板"))
 
                 #if DEBUG
                 if let creationDirectory {
-                    let dirItem = NSMenuItem(title: "目录 / Dir: \(creationDirectory.path)", action: nil, keyEquivalent: "")
+                    let dirItem = NSMenuItem(title: String(format: RCLocalizedString("目录: %@"), creationDirectory.path), action: nil, keyEquivalent: "")
                     dirItem.isEnabled = false
                     templatesMenu.addItem(dirItem)
                     templatesMenu.addItem(NSMenuItem.separator())
                 }
                 #endif
 
-                for (idx, spec) in RCBSettings.templateSpecs.enumerated() {
+                for (idx, spec) in settings.allTemplateSpecs.enumerated() {
                     guard settings.isTemplateEnabled(spec.id) else { continue }
 
                     let item = NSMenuItem(title: spec.title, action: #selector(createFromTemplate(_:)), keyEquivalent: "")
@@ -600,38 +600,38 @@ final class FinderSync: FIFinderSync {
                     templatesMenu.addItem(item)
                 }
                 if !templatesMenu.items.isEmpty {
-                    let templatesSubmenuItem = NSMenuItem(title: "模板 / Templates", action: nil, keyEquivalent: "")
+                    let templatesSubmenuItem = NSMenuItem(title: RCLocalizedString("模板"), action: nil, keyEquivalent: "")
                     createMenu.addItem(NSMenuItem.separator())
                     createMenu.addItem(templatesSubmenuItem)
                     createMenu.setSubmenu(templatesMenu, for: templatesSubmenuItem)
                 }
             }
 
-            let createSubmenuItem = NSMenuItem(title: "创建新文件 / New File", action: nil, keyEquivalent: "")
+            let createSubmenuItem = NSMenuItem(title: RCLocalizedString("创建新文件"), action: nil, keyEquivalent: "")
             menu.addItem(createSubmenuItem)
             menu.setSubmenu(createMenu, for: createSubmenuItem)
         }
 
 
         if settings.menu.showOffice {
-            let createOfficeMenu = NSMenu(title: "Office")
+            let createOfficeMenu = NSMenu(title: RCLocalizedString("Office"))
 
-            let createDocxItem = NSMenuItem(title: "新建 Word (.docx)", action: #selector(createNewWordDocument(_:)), keyEquivalent: "")
+            let createDocxItem = NSMenuItem(title: RCLocalizedString("新建 Word (.docx)"), action: #selector(createNewWordDocument(_:)), keyEquivalent: "")
             if let creationDirectory { createDocxItem.representedObject = creationDirectory }
             createDocxItem.isEnabled = (creationDirectory != nil)
             createOfficeMenu.addItem(createDocxItem)
 
-            let createXlsxItem = NSMenuItem(title: "新建 Excel (.xlsx)", action: #selector(createNewExcelDocument(_:)), keyEquivalent: "")
+            let createXlsxItem = NSMenuItem(title: RCLocalizedString("新建 Excel (.xlsx)"), action: #selector(createNewExcelDocument(_:)), keyEquivalent: "")
             if let creationDirectory { createXlsxItem.representedObject = creationDirectory }
             createXlsxItem.isEnabled = (creationDirectory != nil)
             createOfficeMenu.addItem(createXlsxItem)
 
-            let createPptxItem = NSMenuItem(title: "新建 PowerPoint (.pptx)", action: #selector(createNewPowerPointDocument(_:)), keyEquivalent: "")
+            let createPptxItem = NSMenuItem(title: RCLocalizedString("新建 PowerPoint (.pptx)"), action: #selector(createNewPowerPointDocument(_:)), keyEquivalent: "")
             if let creationDirectory { createPptxItem.representedObject = creationDirectory }
             createPptxItem.isEnabled = (creationDirectory != nil)
             createOfficeMenu.addItem(createPptxItem)
 
-            let createOfficeSubmenuItem = NSMenuItem(title: "新建 Office 文档 / New Office", action: nil, keyEquivalent: "")
+            let createOfficeSubmenuItem = NSMenuItem(title: RCLocalizedString("新建 Office 文档"), action: nil, keyEquivalent: "")
             menu.addItem(createOfficeSubmenuItem)
             menu.setSubmenu(createOfficeMenu, for: createOfficeSubmenuItem)
         }
@@ -639,11 +639,11 @@ final class FinderSync: FIFinderSync {
 
         // Open With
         if settings.menu.showOpenWith {
-            let openWithMenu = NSMenu(title: "打开方式 / Open With")
+            let openWithMenu = NSMenu(title: RCLocalizedString("打开方式"))
 
             #if DEBUG
             if let creationDirectory {
-                let dirItem = NSMenuItem(title: "目录 / Dir: \(creationDirectory.path)", action: nil, keyEquivalent: "")
+                let dirItem = NSMenuItem(title: String(format: RCLocalizedString("目录: %@"), creationDirectory.path), action: nil, keyEquivalent: "")
                 dirItem.isEnabled = false
                 openWithMenu.addItem(dirItem)
                 openWithMenu.addItem(NSMenuItem.separator())
@@ -667,7 +667,7 @@ final class FinderSync: FIFinderSync {
                 }()
 
                 let folderItem = NSMenuItem(
-                    title: "在 \(displayName) 打开目录 / Open Folder in \(displayName)",
+                    title: String(format: RCLocalizedString("在 %@ 打开目录"), displayName),
                     action: #selector(openFolderInOpenWithApp(_:)),
                     keyEquivalent: ""
                 )
@@ -675,20 +675,16 @@ final class FinderSync: FIFinderSync {
                 folderItem.identifier = NSUserInterfaceItemIdentifier(spec.id)
                 folderItem.representedObject = creationDirectory
 
-                if spec.id == "openwith.obsidian" {
-                    if let creationDirectory {
-                        folderItem.isEnabled = isObsidianVaultDirectory(creationDirectory)
-                    } else {
-                        folderItem.isEnabled = false
-                    }
-                } else {
-                    folderItem.isEnabled = (creationDirectory != nil)
-                }
+                // NOTE: We skip the isObsidianVaultDirectory check during menu creation
+                // because FileManager access in menu(for:) can trigger macOS sandbox
+                // permission dialogs for certain directories (e.g. those created by
+                // third-party tools). Vault validation is deferred to the click handler.
+                folderItem.isEnabled = (creationDirectory != nil)
 
                 openWithMenu.addItem(folderItem)
 
                 let selectionItem = NSMenuItem(
-                    title: "在 \(displayName) 打开选择项 / Open Selection in \(displayName)",
+                    title: String(format: RCLocalizedString("在 %@ 打开选择项"), displayName),
                     action: #selector(openSelectionInOpenWithApp(_:)),
                     keyEquivalent: ""
                 )
@@ -718,26 +714,26 @@ final class FinderSync: FIFinderSync {
             }
 
             if !openWithMenu.items.isEmpty {
-                let openWithSubmenuItem = NSMenuItem(title: "打开方式 / Open With", action: nil, keyEquivalent: "")
+                let openWithSubmenuItem = NSMenuItem(title: RCLocalizedString("打开方式"), action: nil, keyEquivalent: "")
                 menu.addItem(openWithSubmenuItem)
                 menu.setSubmenu(openWithMenu, for: openWithSubmenuItem)
             }
         }
 
-        let copyDirItem = NSMenuItem(title: "复制当前目录 / Copy Current Directory", action: #selector(copyCurrentDirectory(_:)), keyEquivalent: "")
+        let copyDirItem = NSMenuItem(title: RCLocalizedString("复制当前目录"), action: #selector(copyCurrentDirectory(_:)), keyEquivalent: "")
         if let creationDirectory { copyDirItem.representedObject = creationDirectory }
         copyDirItem.isEnabled = (creationDirectory != nil)
         menu.addItem(copyDirItem)
 
-        menu.addItem(NSMenuItem(title: "复制路径 / Copy POSIX Path", action: #selector(copyPath), keyEquivalent: ""))
-        menu.addItem(NSMenuItem(title: "复制文件名 / Copy Filename", action: #selector(copyFilename), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: RCLocalizedString("复制路径"), action: #selector(copyPath), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: RCLocalizedString("复制文件名"), action: #selector(copyFilename), keyEquivalent: ""))
 
-        let terminalDirItem = NSMenuItem(title: "在当前目录打开终端 / Open Terminal Here", action: #selector(openTerminalHere(_:)), keyEquivalent: "")
+        let terminalDirItem = NSMenuItem(title: RCLocalizedString("在当前目录打开终端"), action: #selector(openTerminalHere(_:)), keyEquivalent: "")
         if let creationDirectory { terminalDirItem.representedObject = creationDirectory }
         terminalDirItem.isEnabled = (creationDirectory != nil)
         menu.addItem(terminalDirItem)
 
-        let terminalItem = NSMenuItem(title: "在终端打开 / Open in Terminal", action: #selector(openInTerminal(_:)), keyEquivalent: "")
+        let terminalItem = NSMenuItem(title: RCLocalizedString("在终端打开"), action: #selector(openInTerminal(_:)), keyEquivalent: "")
         if let url = targeted ?? selected?.first { terminalItem.representedObject = url }
         menu.addItem(terminalItem)
 
@@ -855,7 +851,7 @@ final class FinderSync: FIFinderSync {
         let alert = NSAlert()
         alert.messageText = messageText
         alert.informativeText = informativeText
-        alert.addButton(withTitle: "好 / OK")
+        alert.addButton(withTitle: RCLocalizedString("好"))
         _ = alert.runModal()
     }
 
@@ -871,7 +867,7 @@ final class FinderSync: FIFinderSync {
 
         guard let directoryURL = lastMenuCreationDirectoryURL else {
             logger.error("openFolderInOpenWithApp no directory")
-            showAlert(messageText: "无法确定目录 / No directory", informativeText: "Finder 没有提供当前目录。\n\n请对某个文件/文件夹右键，或先点击文件列表再试。")
+            showAlert(messageText: RCLocalizedString("无法确定目录"), informativeText: RCLocalizedString("Finder 没有提供当前目录。\n\n请对某个文件/文件夹右键，或先点击文件列表再试。"))
             return
         }
 
@@ -891,7 +887,7 @@ final class FinderSync: FIFinderSync {
 
         guard let appURL = FinderCommandHandler.resolveInstalledApplicationURL(bundleIdCandidates: ids) else {
             logger.error("openFolderInOpenWithApp app not found")
-            showAlert(messageText: "未找到应用 / Application not found", informativeText: ids.joined(separator: "\n"))
+            showAlert(messageText: RCLocalizedString("未找到应用"), informativeText: ids.joined(separator: "\n"))
             return
         }
 
@@ -908,7 +904,7 @@ final class FinderSync: FIFinderSync {
                 if let error {
                     let detail = "\(error.localizedDescription)\n\n(\((error as NSError).domain) \((error as NSError).code))"
 
-                    self.showAlert(messageText: "无法打开 / Failed to open", informativeText: detail)
+                    self.showAlert(messageText: RCLocalizedString("无法打开"), informativeText: detail)
                     self.logger.error("openWith(folder) failed app=\(appBundleID, privacy: .public) err=\(detail, privacy: .public)")
                 } else {
                     self.logger.info("openWith(folder) success app=\(runningApp?.bundleIdentifier ?? appBundleID, privacy: .public)")
@@ -935,7 +931,7 @@ final class FinderSync: FIFinderSync {
 
         guard let appURL = FinderCommandHandler.resolveInstalledApplicationURL(bundleIdCandidates: ids) else {
             logger.error("openSelectionInOpenWithApp app not found")
-            showAlert(messageText: "未找到应用 / Application not found", informativeText: ids.joined(separator: "\n"))
+            showAlert(messageText: RCLocalizedString("未找到应用"), informativeText: ids.joined(separator: "\n"))
             return
         }
 
@@ -948,7 +944,7 @@ final class FinderSync: FIFinderSync {
 
         guard !urls.isEmpty else {
             logger.error("openSelectionInOpenWithApp no urls")
-            showAlert(messageText: "没有选择项 / No selection", informativeText: "请先选中文件/文件夹，或使用 Open Folder。")
+            showAlert(messageText: RCLocalizedString("没有选择项"), informativeText: RCLocalizedString("请先选中文件/文件夹，或使用 Open Folder。"))
             return
         }
 
@@ -963,7 +959,7 @@ final class FinderSync: FIFinderSync {
             DispatchQueue.main.async {
                 if let error {
                     let detail = "\(error.localizedDescription)\n\n(\((error as NSError).domain) \((error as NSError).code))"
-                    self.showAlert(messageText: "无法打开 / Failed to open", informativeText: detail)
+                    self.showAlert(messageText: RCLocalizedString("无法打开"), informativeText: detail)
                     self.logger.error("openWith(selection) failed app=\(appBundleID, privacy: .public) err=\(detail, privacy: .public)")
 
                 } else {
@@ -1027,14 +1023,15 @@ final class FinderSync: FIFinderSync {
 
         let id: String = sender.identifier?.rawValue ?? ""
 
+        let allSpecs = RCBSettings.loadCached().allTemplateSpecs
         let spec: RCBSettings.TemplateSpec? = {
-            if !id.isEmpty, let s = RCBSettings.templateSpecs.first(where: { $0.id == id }) {
+            if !id.isEmpty, let s = allSpecs.first(where: { $0.id == id }) {
                 return s
             }
-            if sender.tag >= 0, sender.tag < RCBSettings.templateSpecs.count {
-                return RCBSettings.templateSpecs[sender.tag]
+            if sender.tag >= 0, sender.tag < allSpecs.count {
+                return allSpecs[sender.tag]
             }
-            return RCBSettings.templateSpecs.first(where: { $0.title == sender.title })
+            return allSpecs.first(where: { $0.title == sender.title })
         }()
 
         guard let spec else {
@@ -1054,9 +1051,9 @@ final class FinderSync: FIFinderSync {
             NSWorkspace.shared.activateFileViewerSelecting([createdURL])
         } catch {
             let alert = NSAlert()
-            alert.messageText = "无法创建文件 / Failed to create file"
+            alert.messageText = RCLocalizedString("无法创建文件")
             alert.informativeText = error.localizedDescription
-            alert.addButton(withTitle: "好 / OK")
+            alert.addButton(withTitle: RCLocalizedString("好"))
             _ = alert.runModal()
 
             logger.error("createFromTemplate failed id=\(spec.id, privacy: .public) fileName=\(spec.fileName, privacy: .public) err=\(error.localizedDescription, privacy: .public)")
@@ -1124,9 +1121,9 @@ final class FinderSync: FIFinderSync {
             NSApp.activate(ignoringOtherApps: true)
 
             let alert = NSAlert()
-            alert.messageText = "无法确定目录 / No directory"
-            alert.informativeText = "Finder 没有提供当前目录（background menu 可能会这样）。\n\n请先在该窗口里点击一下文件列表再试，或对某个文件/文件夹右键。"
-            alert.addButton(withTitle: "好 / OK")
+            alert.messageText = RCLocalizedString("无法确定目录")
+            alert.informativeText = RCLocalizedString("Finder 没有提供当前目录（background menu 可能会这样）。\n\n请先在该窗口里点击一下文件列表再试，或对某个文件/文件夹右键。")
+            alert.addButton(withTitle: RCLocalizedString("好"))
             _ = alert.runModal()
             return
         }
@@ -1136,9 +1133,9 @@ final class FinderSync: FIFinderSync {
             NSWorkspace.shared.activateFileViewerSelecting([createdURL])
         } catch {
             let alert = NSAlert()
-            alert.messageText = "无法创建文件 / Failed to create file"
+            alert.messageText = RCLocalizedString("无法创建文件")
             alert.informativeText = error.localizedDescription
-            alert.addButton(withTitle: "好 / OK")
+            alert.addButton(withTitle: RCLocalizedString("好"))
             _ = alert.runModal()
 
             self.logger.error("Create file error: \(error.localizedDescription, privacy: .public)")
@@ -1203,18 +1200,18 @@ final class FinderSync: FIFinderSync {
             NSApp.activate(ignoringOtherApps: true)
 
             let alert = NSAlert()
-            alert.messageText = "无法确定目录 / No directory"
-            alert.informativeText = "Finder 没有提供当前目录（background menu 可能会这样）。\n\n请先在该窗口里点击一下文件列表再试，或对某个文件/文件夹右键。"
-            alert.addButton(withTitle: "好 / OK")
+            alert.messageText = RCLocalizedString("无法确定目录")
+            alert.informativeText = RCLocalizedString("Finder 没有提供当前目录（background menu 可能会这样）。\n\n请先在该窗口里点击一下文件列表再试，或对某个文件/文件夹右键。")
+            alert.addButton(withTitle: RCLocalizedString("好"))
             _ = alert.runModal()
             return
         }
 
         guard let templateURL = templateURL(for: kind) else {
             let alert = NSAlert()
-            alert.messageText = "\(kind.displayName) 模板不可用 / Template not found"
-            alert.informativeText = "未找到 \(kind.displayName) 安装或模板文件。\n请从 App Store 安装 \(kind.displayName)。"
-            alert.addButton(withTitle: "好 / OK")
+            alert.messageText = String(format: RCLocalizedString("%@ 模板不可用"), kind.displayName)
+            alert.informativeText = String(format: RCLocalizedString("未找到 %@ 安装或模板文件。\n请从 App Store 安装 %@。"), kind.displayName, kind.displayName)
+            alert.addButton(withTitle: RCLocalizedString("好"))
             _ = alert.runModal()
             return
         }
@@ -1224,9 +1221,9 @@ final class FinderSync: FIFinderSync {
             NSWorkspace.shared.activateFileViewerSelecting([createdURL])
         } catch {
             let alert = NSAlert()
-            alert.messageText = "无法创建文件 / Failed to create file"
+            alert.messageText = RCLocalizedString("无法创建文件")
             alert.informativeText = error.localizedDescription
-            alert.addButton(withTitle: "好 / OK")
+            alert.addButton(withTitle: RCLocalizedString("好"))
             _ = alert.runModal()
 
             self.logger.error("Create iWork file error: \(error.localizedDescription, privacy: .public)")
@@ -1249,9 +1246,9 @@ final class FinderSync: FIFinderSync {
             NSApp.activate(ignoringOtherApps: true)
 
             let alert = NSAlert()
-            alert.messageText = "无法确定目录 / No directory"
-            alert.informativeText = "Finder 没有提供当前目录（background menu 可能会这样）。\n\n请先在该窗口里点击一下文件列表再试，或对某个文件/文件夹右键。"
-            alert.addButton(withTitle: "好 / OK")
+            alert.messageText = RCLocalizedString("无法确定目录")
+            alert.informativeText = RCLocalizedString("Finder 没有提供当前目录（background menu 可能会这样）。\n\n请先在该窗口里点击一下文件列表再试，或对某个文件/文件夹右键。")
+            alert.addButton(withTitle: RCLocalizedString("好"))
             _ = alert.runModal()
             return
         }
@@ -1263,9 +1260,9 @@ final class FinderSync: FIFinderSync {
             NSWorkspace.shared.activateFileViewerSelecting([createdURL])
         } catch {
             let alert = NSAlert()
-            alert.messageText = "无法创建文件夹 / Failed to create folder"
+            alert.messageText = RCLocalizedString("无法创建文件夹")
             alert.informativeText = error.localizedDescription
-            alert.addButton(withTitle: "好 / OK")
+            alert.addButton(withTitle: RCLocalizedString("好"))
             _ = alert.runModal()
 
             self.logger.error("Create folder error: \(error.localizedDescription, privacy: .public)")
@@ -1290,9 +1287,9 @@ final class FinderSync: FIFinderSync {
             NSWorkspace.shared.activateFileViewerSelecting([createdURL])
         } catch {
             let alert = NSAlert()
-            alert.messageText = "无法粘贴 / Paste failed"
+            alert.messageText = RCLocalizedString("无法粘贴")
             alert.informativeText = error.localizedDescription
-            alert.addButton(withTitle: "好 / OK")
+            alert.addButton(withTitle: RCLocalizedString("好"))
             _ = alert.runModal()
         }
     }
@@ -1315,9 +1312,9 @@ final class FinderSync: FIFinderSync {
             NSWorkspace.shared.activateFileViewerSelecting([createdURL])
         } catch {
             let alert = NSAlert()
-            alert.messageText = "无法粘贴 / Paste failed"
+            alert.messageText = RCLocalizedString("无法粘贴")
             alert.informativeText = error.localizedDescription
-            alert.addButton(withTitle: "好 / OK")
+            alert.addButton(withTitle: RCLocalizedString("好"))
             _ = alert.runModal()
         }
     }
@@ -1338,9 +1335,9 @@ final class FinderSync: FIFinderSync {
             NSApp.activate(ignoringOtherApps: true)
 
             let alert = NSAlert()
-            alert.messageText = "无法确定目录 / No directory"
-            alert.informativeText = "Finder 没有提供当前目录（background menu 可能会这样）。\n\n请先在该窗口里点击一下文件列表再试，或对某个文件/文件夹右键。"
-            alert.addButton(withTitle: "好 / OK")
+            alert.messageText = RCLocalizedString("无法确定目录")
+            alert.informativeText = RCLocalizedString("Finder 没有提供当前目录（background menu 可能会这样）。\n\n请先在该窗口里点击一下文件列表再试，或对某个文件/文件夹右键。")
+            alert.addButton(withTitle: RCLocalizedString("好"))
             _ = alert.runModal()
             return
         }
@@ -1352,9 +1349,9 @@ final class FinderSync: FIFinderSync {
             NSWorkspace.shared.activateFileViewerSelecting([createdURL])
         } catch {
             let alert = NSAlert()
-            alert.messageText = "无法创建文件 / Failed to create file"
+            alert.messageText = RCLocalizedString("无法创建文件")
             alert.informativeText = error.localizedDescription
-            alert.addButton(withTitle: "好 / OK")
+            alert.addButton(withTitle: RCLocalizedString("好"))
             _ = alert.runModal()
 
             self.logger.error("Create file error: \(error.localizedDescription, privacy: .public)")

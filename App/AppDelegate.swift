@@ -13,13 +13,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         setupStatusItem()
         enableLaunchAtLoginIfNeededOnFirstLaunch()
+
+        NotificationCenter.default.addObserver(self, selector: #selector(languageDidChange), name: .RCBLanguageDidChange, object: nil)
+    }
+
+    @objc private func languageDidChange() {
+        refreshMenuLanguage()
+    }
+
+    private func refreshMenuLanguage() {
+        statusItem.menu = buildMenu()
+        // Also rebuild settings window if open
+        settingsWindow?.contentView = NSHostingView(rootView: SettingsView())
     }
 
     private func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
 
         if let button = statusItem.button {
-            button.image = NSImage(systemSymbolName: "cursorarrow.click.2", accessibilityDescription: "RightClickBuddy")
+            button.image = NSImage(systemSymbolName: "cursorarrow.click.2", accessibilityDescription: RCLocalizedString("RightClickBuddy"))
         }
 
         statusItem.menu = buildMenu()
@@ -28,41 +40,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func buildMenu() -> NSMenu {
         let menu = NSMenu()
 
-        let settingsItem = NSMenuItem(title: "设置 / Settings…", action: #selector(openSettings), keyEquivalent: ",")
+        let settingsItem = NSMenuItem(title: RCLocalizedString("设置"), action: #selector(openSettings), keyEquivalent: ",")
         settingsItem.target = self
         menu.addItem(settingsItem)
 
-        let extensionsItem = NSMenuItem(title: "启用 Finder 扩展 / Enable Finder Extension…", action: #selector(openExtensionsSettings), keyEquivalent: "")
-        extensionsItem.target = self
-        menu.addItem(extensionsItem)
-
-        #if DEBUG
-        let reloadItem = NSMenuItem(title: "重载 Finder 扩展 / Reload Finder Extension", action: #selector(reloadFinderExtension), keyEquivalent: "")
-        reloadItem.target = self
-        menu.addItem(reloadItem)
-        #endif
-
         menu.addItem(NSMenuItem.separator())
 
-        let launchItem = NSMenuItem(title: "开机启动 / Launch at Login", action: #selector(toggleLaunchAtLogin), keyEquivalent: "")
+        let launchItem = NSMenuItem(title: RCLocalizedString("开机启动"), action: #selector(toggleLaunchAtLogin), keyEquivalent: "")
         launchItem.target = self
         launchItem.state = LaunchAtLoginManager.isEnabled ? .on : .off
         menu.addItem(launchItem)
 
-        let hiddenItem = NSMenuItem(title: "显示隐藏文件 / Show Hidden Files", action: #selector(toggleShowHiddenFiles), keyEquivalent: "")
+        let hiddenItem = NSMenuItem(title: RCLocalizedString("显示隐藏文件"), action: #selector(toggleShowHiddenFiles), keyEquivalent: "")
         hiddenItem.target = self
         hiddenItem.state = isShowingHiddenFiles ? .on : .off
         menu.addItem(hiddenItem)
 
         menu.addItem(NSMenuItem.separator())
 
-        let uninstallItem = NSMenuItem(title: "卸载 / Uninstall…", action: #selector(showUninstallHelp), keyEquivalent: "")
-        uninstallItem.target = self
-        menu.addItem(uninstallItem)
-
-        menu.addItem(NSMenuItem.separator())
-
-        let quitItem = NSMenuItem(title: "退出 / Quit", action: #selector(quitApp), keyEquivalent: "q")
+        let quitItem = NSMenuItem(title: RCLocalizedString("退出"), action: #selector(quitApp), keyEquivalent: "q")
         quitItem.target = self
         menu.addItem(quitItem)
 
@@ -104,8 +100,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let hostingController = NSHostingController(rootView: SettingsView())
         let window = NSWindow(contentViewController: hostingController)
-        window.title = "设置 / Settings"
-        window.setContentSize(NSSize(width: 640, height: 640))
+        window.title = RCLocalizedString("设置")
+        window.setContentSize(NSSize(width: 740, height: 640))
         window.styleMask = [.titled, .closable, .miniaturizable]
         window.isReleasedWhenClosed = false
         window.center()
@@ -140,9 +136,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             try restartFinder()
         } catch {
             let alert = NSAlert()
-            alert.messageText = "操作失败 / Failed"
+            alert.messageText = RCLocalizedString("操作失败")
             alert.informativeText = error.localizedDescription
-            alert.addButton(withTitle: "好 / OK")
+            alert.addButton(withTitle: RCLocalizedString("好"))
             _ = alert.runModal()
         }
 
@@ -171,19 +167,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if task.terminationStatus != 0 {
             let data = pipe.fileHandleForReading.readDataToEndOfFile()
             let output = String(decoding: data, as: UTF8.self)
-            throw NSError(domain: "RightClickBuddy", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: output.isEmpty ? "osascript failed" : output])
+            throw NSError(domain: "RightClickBuddy", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: output.isEmpty ? RCLocalizedString("osascript failed") : output])
         }
     }
 
     #if DEBUG
-    @objc private func reloadFinderExtension() {
+    @objc func reloadFinderExtension() {
         do {
             try reloadFinderSyncExtension()
         } catch {
             let alert = NSAlert()
-            alert.messageText = "重载失败 / Reload failed"
+            alert.messageText = RCLocalizedString("重载失败")
             alert.informativeText = error.localizedDescription
-            alert.addButton(withTitle: "好 / OK")
+            alert.addButton(withTitle: RCLocalizedString("好"))
             _ = alert.runModal()
         }
     }
@@ -206,7 +202,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if task.terminationStatus != 0 {
                 let data = pipe.fileHandleForReading.readDataToEndOfFile()
                 let output = String(decoding: data, as: UTF8.self)
-                throw NSError(domain: "RightClickBuddy", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: output.isEmpty ? "Command failed: \(executable) \(args.joined(separator: " "))" : output])
+                throw NSError(domain: "RightClickBuddy", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: output.isEmpty ? String(format: RCLocalizedString("Command failed: %@ %@"), executable, args.joined(separator: " ")) : output])
             }
         }
 
@@ -219,10 +215,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func showUninstallHelp() {
         let alert = NSAlert()
-        alert.messageText = "卸载 / Uninstall"
-        alert.informativeText = "1) 退出应用 / Quit the app\n2) 运行卸载包 RightClickBuddy-Uninstall.pkg（如果你已生成）\n   或者删除 /Applications/RightClickBuddy.app\n\nFinder 扩展可在系统设置中关闭。"
-        alert.addButton(withTitle: "打开 Applications / Open Applications")
-        alert.addButton(withTitle: "好 / OK")
+        alert.messageText = RCLocalizedString("卸载")
+        alert.informativeText = RCLocalizedString("1) 退出应用\n2) 运行卸载包 RightClickBuddy-Uninstall.pkg（如果你已生成）\n   或者删除 /Applications/RightClickBuddy.app\n\nFinder 扩展可在系统设置中关闭。")
+        alert.addButton(withTitle: RCLocalizedString("打开 Applications"))
+        alert.addButton(withTitle: RCLocalizedString("好"))
         let response = alert.runModal()
         if response == .alertFirstButtonReturn {
             NSWorkspace.shared.open(URL(fileURLWithPath: "/Applications", isDirectory: true))

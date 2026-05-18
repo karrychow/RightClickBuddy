@@ -1,0 +1,175 @@
+// ============================
+// AppDelegate.swift — Menu items
+// ============================
+"设置" = "Settings";
+"启用 Finder 扩展" = "Enable Finder Extension";
+"重载 Finder 扩展" = "Reload Finder Extension";
+"开机启动" = "Launch at Login";
+"显示隐藏文件" = "Show Hidden Files";
+"卸载" = "Uninstall";
+"退出" = "Quit";
+"RightClickBuddy" = "RightClickBuddy";
+"打开 Applications" = "Open Applications";
+
+// ============================
+// AppDelegate.swift — Alerts
+// ============================
+"操作失败" = "Operation Failed";
+"重载失败" = "Reload Failed";
+"osascript failed" = "osascript failed";
+"1) 退出应用\n2) 运行卸载包 RightClickBuddy-Uninstall.pkg（如果你已生成）\n   或者删除 /Applications/RightClickBuddy.app\n\nFinder 扩展可在系统设置中关闭。" = "1) Quit the app\n2) Run RightClickBuddy-Uninstall.pkg (if you generated it)\n   or delete /Applications/RightClickBuddy.app\n\nYou can disable the Finder extension in System Settings.";
+
+// ============================
+// FinderSync.swift — Menu items
+// ============================
+"创建新文件" = "New File";
+"新建" = "New";
+"新建文件夹" = "New Folder";
+"新建文本 (txt)" = "New Text File (txt)";
+"新建 Markdown (.md)" = "New Markdown (.md)";
+"新建 JSON (.json)" = "New JSON (.json)";
+"新建 Shell (.sh)" = "New Shell (.sh)";
+"新建 .env" = "New .env";
+"新建 Pages 文档 (.pages)" = "New Pages Document (.pages)";
+"从剪贴板新建文本 (txt)" = "Paste as Text File (txt)";
+"从剪贴板新建图片 (png)" = "Paste as Image (png)";
+"新建 Numbers 表格 (.numbers)" = "New Numbers Spreadsheet (.numbers)";
+"新建 Keynote 演示文稿 (.key)" = "New Keynote Presentation (.key)";
+"模板" = "Templates";
+"Office" = "Office";
+"新建 Word (.docx)" = "New Word (.docx)";
+"新建 Excel (.xlsx)" = "New Excel (.xlsx)";
+"新建 PowerPoint (.pptx)" = "New PowerPoint (.pptx)";
+"新建 Office 文档" = "New Office Document";
+"打开方式" = "Open With";
+"在 %@ 打开目录" = "Open Folder in %@";
+"在 %@ 打开选择项" = "Open Selection in %@";
+"复制当前目录" = "Copy Current Directory";
+"复制路径" = "Copy Path";
+"复制文件名" = "Copy Filename";
+"在当前目录打开终端" = "Open Terminal Here";
+"在终端打开" = "Open in Terminal";
+
+// ============================
+// FinderSync.swift — Alert strings
+// ============================
+"好" = "OK";
+"无法确定目录" = "Could Not Determine Directory";
+"Finder 没有提供当前目录。\n\n请对某个文件/文件夹右键，或先点击文件列表再试。" = "Finder did not provide the current directory.\n\nPlease right-click a file/folder, or click in the file list first.";
+"Finder 没有提供当前目录（background menu 可能会这样）。\n\n请先在该窗口里点击一下文件列表再试，或对某个文件/文件夹右键。" = "Finder did not provide the current directory (background menu case).\n\nPlease click in the file list first, or right-click a file/folder.";
+"未找到应用" = "Application Not Found";
+"无法打开" = "Could Not Open";
+"没有选择项" = "No Selection";
+"请先选中文件/文件夹，或使用 Open Folder。" = "Please select files/folders first, or use Open Folder.";
+"无法创建文件" = "Could Not Create File";
+"%@ 模板不可用" = "%@ Template Not Available";
+"未找到 %@ 安装或模板文件。\n请从 App Store 安装 %@。" = "Could not find %@ installation or template file.\nPlease install %@ from the App Store.";
+"无法创建文件夹" = "Could Not Create Folder";
+"无法粘贴" = "Could Not Paste";
+
+// ============================
+// ============================
+// AppDelegate.swift — Debug error strings
+// ============================
+"Command failed: %@ %@" = "Command failed: %@ %@";
+
+// FinderCommandHandler.swift — Error strings
+// ============================
+"Application not found: %@" = "Application not found: %@";
+"Empty folder name" = "Empty folder name";
+"Failed to create folder: %@" = "Failed to create folder: %@";
+"Pasteboard has no text" = "Pasteboard has no text";
+"Failed to create file" = "Failed to create file";
+"Pasteboard has no image" = "Pasteboard has no image";
+"Failed to convert image to PNG" = "Failed to convert image to PNG";
+"Failed to write image: %@" = "Failed to write image: %@";
+"Empty file name" = "Empty file name";
+"Unsupported office kind: %@" = "Unsupported office kind: %@";
+"zip failed" = "zip failed";
+"Failed to create iWork document: %@" = "Failed to create iWork document: %@";
+
+// ============================
+// SettingsView.swift — Tabs & Sections
+// ============================
+"菜单" = "Menu";
+"提示" = "Tips";
+"启用 Finder 菜单" = "Enable Finder Menu";
+"显示 New" = "Show New";
+"显示 Templates" = "Show Templates";
+"显示 Office" = "Show Office";
+"显示 Open With" = "Show Open With";
+"生效目录" = "Scope";
+"默认范围：Home + 常用用户目录。" = "Default scope: Home + common user directories.";
+"Remove" = "Remove";
+"Add Folder…" = "Add Folder…";
+"Restore Defaults" = "Restore Defaults";
+"Finder 右键增强" = "Finder Right-Click Enhancement";
+"修改设置后，重新打开 Finder 右键菜单即可生效。" = "Changes take effect when you reopen the Finder right-click menu.";
+"若 Finder 未刷新，可在主 App 菜单里 Reload Finder Extension（Debug）或运行 scripts/dev-reload-findersync.sh。" = "If Finder does not refresh, use Reload Finder Extension (Debug) in the app menu, or run scripts/dev-reload-findersync.sh.";
+"Finder 扩展启用位置：系统设置 → 通用 → 登录项与扩展 → 扩展。" = "Enable the Finder extension: System Settings > General > Login Items & Extensions > Extensions.";
+"恢复默认" = "Restore Defaults";
+" (未安装)" = " (Not Installed)";
+"Choose" = "Choose";
+"选择生效目录" = "Select Scope Directory";
+"可选择任意目录（iCloud Drive / 外置磁盘等需要授权）。" = "Choose any directory (iCloud Drive / external disks may require authorization).";
+"保存目录授权失败：%@" = "Failed to save directory authorization: %@";
+
+// ============================
+// SettingsView.swift — Search placeholders
+// ============================
+"搜索模板..." = "Search Templates...";
+"搜索应用..." = "Search Apps...";
+
+// ============================
+// SettingsView.swift — Language picker
+// ============================
+"语言 / Language" = "Language";
+"跟随系统" = "System Default";
+"中文" = "中文";
+"English" = "English";
+"语言更改需要重启应用才能完全生效。" = "Language changes require restarting the app to take full effect.";
+"重新启动" = "Restart";
+"以后再说" = "Later";
+
+// ============================
+// RCBSettings.swift — Template categories
+// ============================
+"代码" = "Code";
+"配置" = "Config";
+"Git" = "Git";
+"DevOps" = "DevOps";
+"JavaScript / TypeScript" = "JavaScript / TypeScript";
+"Python" = "Python";
+"Go" = "Go";
+"Rust" = "Rust";
+
+// ============================
+// RCBSettings.swift — OpenWith categories
+// ============================
+"Terminal" = "Terminal";
+"Editors" = "Editors";
+"Notes" = "Notes";
+"JetBrains" = "JetBrains";
+
+// ============================
+// SettingsView.swift — Template editor
+// ============================
+"添加模板" = "Add Template";
+"编辑模板" = "Edit Template";
+"编辑" = "Edit";
+"删除" = "Delete";
+"重命名分类" = "Rename Category";
+"删除分类" = "Delete Category";
+"标题" = "Title";
+"文件名" = "File Name";
+"分类" = "Category";
+"内容" = "Content";
+"保存" = "Save";
+"取消" = "Cancel";
+"标题不能为空" = "Title cannot be empty";
+"文件名不能为空" = "File name cannot be empty";
+"未分类" = "Uncategorized";
+"新分类名称" = "New Category Name";
+"确定" = "Confirm";
+"将「%@」重命名为：" = "Rename \"%@\" to:";
+"确定删除分类「%@」及其所有自定义模板？此操作不可撤销。" = "Delete category \"%@\" and all its custom templates? This cannot be undone.";

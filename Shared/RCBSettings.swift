@@ -82,6 +82,9 @@ struct RCBSettings: Codable, Equatable {
     /// - Non-empty: only show FinderSync menu under these roots (and subdirectories)
     var scopeRoots: [String] = []
 
+    /// User-defined template specs (persisted).
+    var customTemplateSpecs: [TemplateSpec] = []
+
     /// Per-template enable flags by TemplateSpec.id.
     var templates: [String: Bool] = [:]
 
@@ -92,45 +95,45 @@ struct RCBSettings: Codable, Equatable {
     static let settingsFileName = "settings.json"
 
     static let templateSpecs: [TemplateSpec] = [
-        // Templates
-        TemplateSpec(id: "template.readme", title: "README.md", fileName: "README.md", category: "模板 / Templates", contents: "# README\n\n"),
-        TemplateSpec(id: "template.gitignore", title: ".gitignore", fileName: ".gitignore", category: "模板 / Templates", contents: "# macOS\n.DS_Store\n\n# Xcode\nDerivedData/\n*.xcuserstate\n\n# SwiftPM\n.build/\n"),
-        TemplateSpec(id: "template.license_mit", title: "LICENSE (MIT)", fileName: "LICENSE", category: "模板 / Templates", contents: "MIT License\n\nCopyright (c) <YEAR> <YOUR NAME>\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n"),
-        TemplateSpec(id: "template.makefile", title: "Makefile", fileName: "Makefile", category: "模板 / Templates", contents: "# Makefile\n\n.PHONY: help\nhelp:\n\t@echo \"targets: help\"\n"),
-
-        // Code (empty)
-        TemplateSpec(id: "code.main_swift", title: "main.swift", fileName: "main.swift", category: "代码 / Code", contents: "\n"),
-        TemplateSpec(id: "code.main_py", title: "main.py", fileName: "main.py", category: "代码 / Code", contents: "\n"),
-        TemplateSpec(id: "code.index_ts", title: "index.ts", fileName: "index.ts", category: "代码 / Code", contents: "\n"),
-        TemplateSpec(id: "code.main_go", title: "main.go", fileName: "main.go", category: "代码 / Code", contents: "\n"),
-        TemplateSpec(id: "code.main_rs", title: "main.rs", fileName: "main.rs", category: "代码 / Code", contents: "\n"),
-        TemplateSpec(id: "code.main_js", title: "main.js", fileName: "main.js", category: "代码 / Code", contents: "\n"),
-
-        // Config
-        TemplateSpec(id: "config.info_plist", title: "Info.plist", fileName: "Info.plist", category: "配置 / Config", contents: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n</dict>\n</plist>\n"),
-        TemplateSpec(id: "config.config_yaml", title: "config.yaml", fileName: "config.yaml", category: "配置 / Config", contents: "# config\n"),
-        TemplateSpec(id: "config.pyproject", title: "pyproject.toml", fileName: "pyproject.toml", category: "配置 / Config", contents: "[project]\nname = \"example\"\nversion = \"0.1.0\"\n"),
+        // 模板 — 项目通用基础文件
+        TemplateSpec(id: "template.readme", title: "README.md", fileName: "README.md", category: "模板", contents: "# README\n\n"),
+        TemplateSpec(id: "template.license_mit", title: "LICENSE (MIT)", fileName: "LICENSE", category: "模板", contents: "MIT License\n\nCopyright (c) <YEAR> <YOUR NAME>\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n"),
 
         // Git
+        TemplateSpec(id: "template.gitignore", title: ".gitignore", fileName: ".gitignore", category: "Git", contents: "# macOS\n.DS_Store\n\n# Xcode\nDerivedData/\n*.xcuserstate\n\n# SwiftPM\n.build/\n"),
         TemplateSpec(id: "git.gitattributes", title: ".gitattributes", fileName: ".gitattributes", category: "Git", contents: "# See: https://git-scm.com/docs/gitattributes\n\n* text=auto\n"),
 
-        // DevOps
+        // DevOps — 构建与部署
+        TemplateSpec(id: "template.makefile", title: "Makefile", fileName: "Makefile", category: "DevOps", contents: "# Makefile\n\n.PHONY: help\nhelp:\n\t@echo \"targets: help\"\n"),
         TemplateSpec(id: "devops.dockerfile", title: "Dockerfile", fileName: "Dockerfile", category: "DevOps", contents: "# Dockerfile\n\nFROM alpine:latest\n\nWORKDIR /app\n\nCMD [\"sh\"]\n"),
         TemplateSpec(id: "devops.docker_compose", title: "docker-compose.yml", fileName: "docker-compose.yml", category: "DevOps", contents: "services:\n  app:\n    image: alpine:latest\n    command: [\"sh\"]\n"),
+
+        // 配置 — 通用配置文件
+        TemplateSpec(id: "config.info_plist", title: "Info.plist", fileName: "Info.plist", category: "配置", contents: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n</dict>\n</plist>\n"),
+        TemplateSpec(id: "config.config_yaml", title: "config.yaml", fileName: "config.yaml", category: "配置", contents: "# config\n"),
+
+        // Python
+        TemplateSpec(id: "config.pyproject", title: "pyproject.toml", fileName: "pyproject.toml", category: "Python", contents: "[project]\nname = \"example\"\nversion = \"0.1.0\"\n"),
+        TemplateSpec(id: "py.requirements", title: "requirements.txt", fileName: "requirements.txt", category: "Python", contents: "\n"),
 
         // JavaScript / TypeScript
         TemplateSpec(id: "js.package_json", title: "package.json", fileName: "package.json", category: "JavaScript / TypeScript", contents: "{\n  \"name\": \"example\",\n  \"version\": \"0.1.0\",\n  \"private\": true\n}\n"),
         TemplateSpec(id: "js.tsconfig", title: "tsconfig.json", fileName: "tsconfig.json", category: "JavaScript / TypeScript", contents: "{\n  \"compilerOptions\": {\n    \"target\": \"ES2022\",\n    \"module\": \"ESNext\",\n    \"moduleResolution\": \"Bundler\",\n    \"strict\": true\n  }\n}\n"),
         TemplateSpec(id: "js.prettierrc", title: ".prettierrc", fileName: ".prettierrc", category: "JavaScript / TypeScript", contents: "{\n  \"semi\": false,\n  \"singleQuote\": true\n}\n"),
 
-        // Python
-        TemplateSpec(id: "py.requirements", title: "requirements.txt", fileName: "requirements.txt", category: "Python", contents: "\n"),
-
         // Go
         TemplateSpec(id: "go.gomod", title: "go.mod", fileName: "go.mod", category: "Go", contents: "module example.com/project\n\ngo 1.22\n"),
 
         // Rust
-        TemplateSpec(id: "rust.cargo_toml", title: "Cargo.toml", fileName: "Cargo.toml", category: "Rust", contents: "[package]\nname = \"example\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\n")
+        TemplateSpec(id: "rust.cargo_toml", title: "Cargo.toml", fileName: "Cargo.toml", category: "Rust", contents: "[package]\nname = \"example\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\n"),
+
+        // 入口文件 — 各语言 main 模板
+        TemplateSpec(id: "code.main_swift", title: "main.swift", fileName: "main.swift", category: "入口文件", contents: "\n"),
+        TemplateSpec(id: "code.main_py", title: "main.py", fileName: "main.py", category: "入口文件", contents: "\n"),
+        TemplateSpec(id: "code.index_ts", title: "index.ts", fileName: "index.ts", category: "入口文件", contents: "\n"),
+        TemplateSpec(id: "code.main_go", title: "main.go", fileName: "main.go", category: "入口文件", contents: "\n"),
+        TemplateSpec(id: "code.main_rs", title: "main.rs", fileName: "main.rs", category: "入口文件", contents: "\n"),
+        TemplateSpec(id: "code.main_js", title: "main.js", fileName: "main.js", category: "入口文件", contents: "\n"),
     ]
 
     static let openWithSpecs: [OpenWithSpec] = [
@@ -185,6 +188,50 @@ struct RCBSettings: Codable, Equatable {
         OpenWithSpec(id: "openwith.fleet", title: "Fleet", category: "JetBrains", bundleIdCandidates: ["com.jetbrains.fleet", "com.jetbrains.fleet-EAP"])
     ]
 
+    /// All template specs: built-in + user-defined.
+    var allTemplateSpecs: [TemplateSpec] {
+        Self.templateSpecs + customTemplateSpecs
+    }
+
+    // MARK: - Custom Template CRUD
+
+    mutating func addCustomTemplate(_ template: TemplateSpec) {
+        var t = template
+        if t.id.isEmpty {
+            t.id = UUID().uuidString
+        }
+        customTemplateSpecs.append(t)
+    }
+
+    mutating func updateCustomTemplate(_ template: TemplateSpec) {
+        guard let idx = customTemplateSpecs.firstIndex(where: { $0.id == template.id }) else { return }
+        customTemplateSpecs[idx] = template
+    }
+
+    mutating func removeCustomTemplate(id: String) {
+        customTemplateSpecs.removeAll(where: { $0.id == id })
+        templates.removeValue(forKey: id)
+    }
+
+    mutating func renameCategory(from oldName: String, to newName: String) {
+        for i in customTemplateSpecs.indices where customTemplateSpecs[i].category == oldName {
+            customTemplateSpecs[i].category = newName
+        }
+    }
+
+    /// Returns the custom template IDs that belong to a category.
+    func customTemplateIDs(inCategory category: String) -> [String] {
+        customTemplateSpecs.filter { $0.category == category }.map(\.id)
+    }
+
+    mutating func removeAllCustomTemplates(inCategory category: String) {
+        let ids = customTemplateSpecs.filter { $0.category == category }.map(\.id)
+        customTemplateSpecs.removeAll { $0.category == category }
+        for id in ids {
+            templates.removeValue(forKey: id)
+        }
+    }
+
     static var defaultSettings: RCBSettings {
         var s = RCBSettings()
         for t in templateSpecs {
@@ -193,10 +240,8 @@ struct RCBSettings: Codable, Equatable {
         for a in openWithSpecs {
             s.openWith[a.id] = true
         }
-
-        // Stability: Obsidian is opt-in. Some environments can cause FinderSync to be killed.
+        // Stability: Obsidian is opt-in.
         s.openWith["openwith.obsidian"] = false
-
         return s
     }
 
@@ -212,6 +257,9 @@ struct RCBSettings: Codable, Equatable {
         var s = self
         // Fill defaults for any newly-added items.
         for t in Self.templateSpecs where s.templates[t.id] == nil {
+            s.templates[t.id] = true
+        }
+        for t in s.customTemplateSpecs where s.templates[t.id] == nil {
             s.templates[t.id] = true
         }
         for a in Self.openWithSpecs where s.openWith[a.id] == nil {

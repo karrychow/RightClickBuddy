@@ -28,6 +28,8 @@ targets:
     sources:
       - path: App
       - path: Shared
+    resources:
+      - path: Shared/Localization
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.karry.RightClickBuddy
@@ -46,11 +48,14 @@ targets:
     sources:
       - path: FinderSync
       - path: Shared
+    resources:
+      - path: Shared/Localization
     info:
       path: FinderSync/Info.plist
       properties:
         CFBundleDisplayName: RightClickBuddyFinderSync
         NSExtension:
+          NSExtensionAttributes: {}
           NSExtensionPointIdentifier: com.apple.FinderSync
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).FinderSync
     settings:

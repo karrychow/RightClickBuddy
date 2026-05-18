@@ -2,6 +2,8 @@ import AppKit
 import Foundation
 import os
 
+// MARK: - RCLocalizedString is defined in Shared/LanguageManager.swift
+
 enum FinderCommandHandler {
     private static var logger: Logger {
         Logger(subsystem: "com.karry.RightClickBuddy", category: "FinderCommandHandler")
@@ -97,7 +99,7 @@ enum FinderCommandHandler {
         guard !urls.isEmpty else { return }
 
         guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleIdentifier) else {
-            throw NSError(domain: "RightClickBuddy", code: 20, userInfo: [NSLocalizedDescriptionKey: "Application not found: \(bundleIdentifier)"])
+            throw NSError(domain: "RightClickBuddy", code: 20, userInfo: [NSLocalizedDescriptionKey: String(format: RCLocalizedString("Application not found: %@"), bundleIdentifier)])
         }
 
         let config = NSWorkspace.OpenConfiguration()
@@ -111,7 +113,7 @@ enum FinderCommandHandler {
             throw NSError(
                 domain: "RightClickBuddy",
                 code: 21,
-                userInfo: [NSLocalizedDescriptionKey: "Application not found: \(bundleIdCandidates.joined(separator: ", "))"]
+                userInfo: [NSLocalizedDescriptionKey: String(format: RCLocalizedString("Application not found: %@"), bundleIdCandidates.joined(separator: ", "))]
             )
         }
 
@@ -125,7 +127,7 @@ enum FinderCommandHandler {
     static func createNewFolder(in directoryURL: URL, folderName: String) throws -> URL {
         let trimmed = folderName.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
-            throw NSError(domain: "RightClickBuddy", code: 12, userInfo: [NSLocalizedDescriptionKey: "Empty folder name"])
+            throw NSError(domain: "RightClickBuddy", code: 12, userInfo: [NSLocalizedDescriptionKey: RCLocalizedString("Empty folder name")])
         }
 
         let url = try createUniqueURL(in: directoryURL, fileName: trimmed)
@@ -133,7 +135,7 @@ enum FinderCommandHandler {
         do {
             try FileManager.default.createDirectory(at: url, withIntermediateDirectories: false)
         } catch {
-            throw NSError(domain: "RightClickBuddy", code: 11, userInfo: [NSLocalizedDescriptionKey: "Failed to create folder: \(error.localizedDescription)"])
+            throw NSError(domain: "RightClickBuddy", code: 11, userInfo: [NSLocalizedDescriptionKey: String(format: RCLocalizedString("Failed to create folder: %@"), error.localizedDescription)])
         }
 
         return url
@@ -142,7 +144,7 @@ enum FinderCommandHandler {
     static func createNewTextFileFromPasteboard(in directoryURL: URL, fileName: String = "Clipboard.txt") throws -> URL {
         let pasteboard = NSPasteboard.general
         guard let text = pasteboard.string(forType: .string) else {
-            throw NSError(domain: "RightClickBuddy", code: 30, userInfo: [NSLocalizedDescriptionKey: "Pasteboard has no text"])
+            throw NSError(domain: "RightClickBuddy", code: 30, userInfo: [NSLocalizedDescriptionKey: RCLocalizedString("Pasteboard has no text")])
         }
 
         let url = try createUniqueURL(in: directoryURL, fileName: fileName)
@@ -150,7 +152,7 @@ enum FinderCommandHandler {
 
         let ok = FileManager.default.createFile(atPath: url.path, contents: data, attributes: nil)
         if !ok {
-            throw NSError(domain: "RightClickBuddy", code: 31, userInfo: [NSLocalizedDescriptionKey: "Failed to create file"])
+            throw NSError(domain: "RightClickBuddy", code: 31, userInfo: [NSLocalizedDescriptionKey: RCLocalizedString("Failed to create file")])
         }
 
         return url
@@ -159,20 +161,20 @@ enum FinderCommandHandler {
     static func createNewPNGFileFromPasteboard(in directoryURL: URL, fileName: String = "Clipboard.png") throws -> URL {
         let pasteboard = NSPasteboard.general
         guard let image = NSImage(pasteboard: pasteboard) else {
-            throw NSError(domain: "RightClickBuddy", code: 32, userInfo: [NSLocalizedDescriptionKey: "Pasteboard has no image"])
+            throw NSError(domain: "RightClickBuddy", code: 32, userInfo: [NSLocalizedDescriptionKey: RCLocalizedString("Pasteboard has no image")])
         }
 
         guard let tiff = image.tiffRepresentation,
               let bitmap = NSBitmapImageRep(data: tiff),
               let png = bitmap.representation(using: .png, properties: [:]) else {
-            throw NSError(domain: "RightClickBuddy", code: 33, userInfo: [NSLocalizedDescriptionKey: "Failed to convert image to PNG"])
+            throw NSError(domain: "RightClickBuddy", code: 33, userInfo: [NSLocalizedDescriptionKey: RCLocalizedString("Failed to convert image to PNG")])
         }
 
         let url = try createUniqueURL(in: directoryURL, fileName: fileName)
         do {
             try png.write(to: url, options: [.atomic])
         } catch {
-            throw NSError(domain: "RightClickBuddy", code: 34, userInfo: [NSLocalizedDescriptionKey: "Failed to write image: \(error.localizedDescription)"])
+            throw NSError(domain: "RightClickBuddy", code: 34, userInfo: [NSLocalizedDescriptionKey: String(format: RCLocalizedString("Failed to write image: %@"), error.localizedDescription)])
         }
 
         return url
@@ -181,7 +183,7 @@ enum FinderCommandHandler {
     static func createNewTemplateFile(in directoryURL: URL, fileName: String, contents: Data, posixPermissions: Int? = nil) throws -> URL {
         let trimmed = fileName.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
-            throw NSError(domain: "RightClickBuddy", code: 41, userInfo: [NSLocalizedDescriptionKey: "Empty file name"])
+            throw NSError(domain: "RightClickBuddy", code: 41, userInfo: [NSLocalizedDescriptionKey: RCLocalizedString(RCLocalizedString("Empty file name"))])
         }
 
         let url = try createUniqueURL(in: directoryURL, fileName: trimmed)
@@ -193,7 +195,7 @@ enum FinderCommandHandler {
 
         let ok = FileManager.default.createFile(atPath: url.path, contents: contents, attributes: attributes)
         if !ok {
-            throw NSError(domain: "RightClickBuddy", code: 42, userInfo: [NSLocalizedDescriptionKey: "Failed to create file"])
+            throw NSError(domain: "RightClickBuddy", code: 42, userInfo: [NSLocalizedDescriptionKey: RCLocalizedString("Failed to create file")])
         }
 
         return url
@@ -204,7 +206,7 @@ enum FinderCommandHandler {
 
         let trimmed = fileName.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
-            throw NSError(domain: "RightClickBuddy", code: 2, userInfo: [NSLocalizedDescriptionKey: "Empty file name"])
+            throw NSError(domain: "RightClickBuddy", code: 2, userInfo: [NSLocalizedDescriptionKey: RCLocalizedString(RCLocalizedString("Empty file name"))])
         }
 
         // If user didn't provide an extension, default to .txt
@@ -225,7 +227,7 @@ enum FinderCommandHandler {
 
         let ok = fileManager.createFile(atPath: url.path, contents: contents, attributes: attributes)
         if !ok {
-            throw NSError(domain: "RightClickBuddy", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to create file"])
+            throw NSError(domain: "RightClickBuddy", code: 1, userInfo: [NSLocalizedDescriptionKey: RCLocalizedString("Failed to create file")])
         }
 
         return url
@@ -236,7 +238,7 @@ enum FinderCommandHandler {
         do {
             try FileManager.default.copyItem(at: templateURL, to: url)
         } catch {
-            throw NSError(domain: "RightClickBuddy", code: 3, userInfo: [NSLocalizedDescriptionKey: "Failed to create iWork document: \(error.localizedDescription)"])
+            throw NSError(domain: "RightClickBuddy", code: 3, userInfo: [NSLocalizedDescriptionKey: String(format: RCLocalizedString("Failed to create iWork document: %@"), error.localizedDescription)])
         }
         return url
     }
@@ -257,7 +259,7 @@ enum FinderCommandHandler {
         case "pptx":
             try createPptxPayload(at: tmp)
         default:
-            throw NSError(domain: "RightClickBuddy", code: 4, userInfo: [NSLocalizedDescriptionKey: "Unsupported office kind: \(kind)"])
+            throw NSError(domain: "RightClickBuddy", code: 4, userInfo: [NSLocalizedDescriptionKey: String(format: RCLocalizedString("Unsupported office kind: %@"), kind)])
         }
 
         // Zip the payload directory into the destination file.
@@ -282,7 +284,7 @@ enum FinderCommandHandler {
         if task.terminationStatus != 0 {
             let data = pipe.fileHandleForReading.readDataToEndOfFile()
             let output = String(decoding: data, as: UTF8.self)
-            throw NSError(domain: "RightClickBuddy", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: output.isEmpty ? "zip failed" : output])
+            throw NSError(domain: "RightClickBuddy", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: output.isEmpty ? RCLocalizedString(RCLocalizedString("zip failed")) : output])
         }
     }
 

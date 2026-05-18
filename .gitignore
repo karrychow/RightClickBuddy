@@ -12,7 +12,9 @@ DerivedData/
 
 # Build
 .build/
+build/
 dist/
+.claude/
 
 # IDE
 .idea/
