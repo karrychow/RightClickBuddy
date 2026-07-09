@@ -15,7 +15,6 @@
 		29FE8E320FC035259912BF21 /* IPCProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 835C65CD2D5A9138AC6A86E7 /* IPCProtocol.swift */; };
 		374563362B60CB252A1D778F /* IPCTcpClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F01033C2E6975E8F32F6FA3F /* IPCTcpClient.swift */; };
 		3F06A914DB060878D1D64C54 /* RCBSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0B75E3804BED976D27ECE52 /* RCBSettings.swift */; };
-		43678E21F725FB155018D1E6 /* OpenWithAppCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34851C922DE6F2ACE8513968 /* OpenWithAppCache.swift */; };
 		5422BC5F76AC9F11E34FEA5C /* LanguageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3A48B1662EDEEB6DDF71215 /* LanguageManager.swift */; };
 		55DC2CD71E7D622699BEE0BB /* ZipWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAD98F416B00561BBE59126D /* ZipWriter.swift */; };
 		5B00B3CE08B017F0441D0601 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AC20BA1DB7D34F3B0F5EE34B /* Assets.xcassets */; };
@@ -26,7 +25,6 @@
 		879391A44A427CD5A6CAA1DE /* LanguageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3A48B1662EDEEB6DDF71215 /* LanguageManager.swift */; };
 		8E451C88C3A87F0818C0BEF9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D81BCA9938635981DAAD6D8 /* AppDelegate.swift */; };
 		90C8785149737F2F3E77D558 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C925DB4EF2AAF9CD68B17941 /* SettingsView.swift */; };
-		94F615AE2267956DC3806330 /* OpenWithAppCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34851C922DE6F2ACE8513968 /* OpenWithAppCache.swift */; };
 		9703975EEAD48B688E670F78 /* FinderSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88EC6F45600305DB070980E4 /* FinderSync.swift */; };
 		A7F91316FA2D21C4830B942F /* ExtensionLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8AD1E5F080238E6957EC8B8 /* ExtensionLogger.swift */; };
 		BDE3D6F1455E3916830A1719 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 98C483CB5882C42D0DE77551 /* Localizable.strings */; };
@@ -66,7 +64,6 @@
 		30A1A98E5F3E2F7D272776C0 /* AppLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
 		333DB1ACA82D3DF013BD9B71 /* FinderCommandHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderCommandHandler.swift; sourceTree = "<group>"; };
 		33C0171BB30402F03ED1C02D /* LaunchAtLoginManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginManager.swift; sourceTree = "<group>"; };
-		34851C922DE6F2ACE8513968 /* OpenWithAppCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenWithAppCache.swift; sourceTree = "<group>"; };
 		3D81BCA9938635981DAAD6D8 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		70EB9F293156D40C86D719FA /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		711A59C699B6DFDAE98579D8 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -109,7 +106,6 @@
 				835C65CD2D5A9138AC6A86E7 /* IPCProtocol.swift */,
 				F01033C2E6975E8F32F6FA3F /* IPCTcpClient.swift */,
 				C3A48B1662EDEEB6DDF71215 /* LanguageManager.swift */,
-				34851C922DE6F2ACE8513968 /* OpenWithAppCache.swift */,
 				C0B75E3804BED976D27ECE52 /* RCBSettings.swift */,
 				EAD98F416B00561BBE59126D /* ZipWriter.swift */,
 				4D916CAECDA3226EA1558155 /* Localization */,
@@ -269,7 +265,6 @@
 				5F5B3E61ECC112C9DCDD9231 /* IPCTcpServer.swift in Sources */,
 				879391A44A427CD5A6CAA1DE /* LanguageManager.swift in Sources */,
 				F81D8B748EA5E9F6A50287C9 /* LaunchAtLoginManager.swift in Sources */,
-				43678E21F725FB155018D1E6 /* OpenWithAppCache.swift in Sources */,
 				3F06A914DB060878D1D64C54 /* RCBSettings.swift in Sources */,
 				2628243097D1E35BD3204AF9 /* RightClickBuddyApp.swift in Sources */,
 				90C8785149737F2F3E77D558 /* SettingsView.swift in Sources */,
@@ -288,7 +283,6 @@
 				0D2A467CE55E19BAE971F7C5 /* IPCProtocol.swift in Sources */,
 				374563362B60CB252A1D778F /* IPCTcpClient.swift in Sources */,
 				5422BC5F76AC9F11E34FEA5C /* LanguageManager.swift in Sources */,
-				94F615AE2267956DC3806330 /* OpenWithAppCache.swift in Sources */,
 				0552D1C8989F0E5268B01C32 /* RCBSettings.swift in Sources */,
 				0C01DBC5FFC78B77FAD7C520 /* ZipWriter.swift in Sources */,
 			);

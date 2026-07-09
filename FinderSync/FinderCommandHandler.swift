@@ -95,21 +95,10 @@ enum FinderCommandHandler {
         resolveInstalledApplicationURL(bundleIdCandidates: bundleIdCandidates) != nil
     }
 
-    /// Resolve an app URL for the given OpenWithSpec, falling back to the
-    /// shared App Group cache if NSWorkspace fails (common in sandboxed extensions).
-    static func resolveOpenWithAppURL(specId: String, bundleIdCandidates: [String]) -> URL? {
-        // Primary: NSWorkspace Launch Services lookup.
-        if let url = resolveInstalledApplicationURL(bundleIdCandidates: bundleIdCandidates) {
-            return url
-        }
-
-        // Fallback: pre-resolved cache from the main app (non-sandboxed).
-        if let cachedURL = OpenWithAppCache.cachedAppURL(for: specId) {
-            logger.debug("resolveOpenWith fallback cache specId=\(specId, privacy: .public) path=\(cachedURL.path, privacy: .public)")
-            return cachedURL
-        }
-
-        return nil
+    /// Resolve an app URL for the given OpenWithSpec via Launch Services.
+    /// (NSWorkspace lookup works from the sandboxed extension, so no external cache is needed.)
+    static func resolveOpenWithAppURL(specId _: String, bundleIdCandidates: [String]) -> URL? {
+        resolveInstalledApplicationURL(bundleIdCandidates: bundleIdCandidates)
     }
 
     static func openInApplication(bundleIdentifier: String, urls: [URL]) throws {

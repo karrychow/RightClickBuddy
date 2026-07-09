@@ -18,9 +18,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ipcServer.start()
         AppLogger.app.info("IPC server started")
 
-        // Refresh Open With app cache so the extension knows which apps exist.
-        OpenWithAppCache.refresh()
-
         let settings = RCBSettings.load()
         if settings.menu.showMenuBarIcon {
             setupStatusItem()
