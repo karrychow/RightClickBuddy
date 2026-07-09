@@ -24,10 +24,14 @@ sleep 1
 echo "==> Deleting locked container: $GC"
 if rm -rf "$GC" 2>/dev/null && [ ! -e "$GC" ]; then
   echo "    ✅ removed"
+elif sudo rm -rf "$GC" 2>/dev/null && [ ! -e "$GC" ]; then
+  echo "    ✅ removed (via sudo)"
 else
   echo "    ❌ could not delete."
-  echo "    Grant Full Disk Access to THIS terminal app and re-run:"
-  echo "      System Settings ▸ Privacy & Security ▸ Full Disk Access"
+  echo "    The container is protected — the terminal running this needs Full Disk Access:"
+  echo "      1. System Settings ▸ Privacy & Security ▸ Full Disk Access ▸ enable your terminal app"
+  echo "      2. FULLY QUIT that terminal (Cmd-Q) and reopen it  <-- required, FDA only applies to newly launched apps"
+  echo "      3. re-run this script"
   exit 1
 fi
 

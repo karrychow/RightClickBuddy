@@ -100,6 +100,28 @@ enum IPCTcpClient {
         return path
     }
 
+    /// Fetch the current settings JSON from the main app.
+    /// Uses a single attempt (no auto-launch) so it stays fast on the menu-building path;
+    /// callers fall back to their local cache if the app isn't reachable.
+    static func getSettings() throws -> Data {
+        let request = IPCRequest(
+            id: UUID().uuidString,
+            type: "getSettings",
+            directoryPath: "",
+            fileName: "",
+            fileContents: nil,
+            fileMode: nil,
+            sourcePath: nil,
+            appPath: nil,
+            filePaths: nil
+        )
+        let response = try attemptSend(request)
+        guard response.success, let payload = response.payload else {
+            throw IPCError.operationFailed(response.error ?? "no settings payload")
+        }
+        return payload
+    }
+
     /// Open files with the given app (delegated to non-sandboxed main app).
     static func openWithApps(appPath: String, filePaths: [String]) throws {
         let request = IPCRequest(

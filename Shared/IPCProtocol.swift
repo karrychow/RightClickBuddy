@@ -35,4 +35,13 @@ struct IPCResponse: Codable {
     let success: Bool
     let path: String?
     let error: String?
+    let payload: Data?  // for getSettings: the settings JSON
+
+    init(id: String, success: Bool, path: String?, error: String?, payload: Data? = nil) {
+        self.id = id
+        self.success = success
+        self.path = path
+        self.error = error
+        self.payload = payload
+    }
 }

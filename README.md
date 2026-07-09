@@ -75,17 +75,22 @@ arbitrary locations itself. It delegates those operations to the non-sandboxed h
 **local TCP channel on a fixed loopback port** (`127.0.0.1:52847`, see `Shared/IPCProtocol.swift`).
 If the host app isn't running when an action needs it, the extension auto-launches it and retries.
 
+Settings flow the same way: the host app stores them in a normal file
+(`~/Library/Application Support/RightClickBuddy/settings.json`) and the extension fetches them over
+the same IPC channel. Nothing depends on an App Group container, which is why an **ad-hoc-signed
+build has full functionality** (including persistent settings and custom scope folders) with no
+Apple Developer account.
+
 ## Troubleshooting
 
 - **"Main app is not running"** — should not happen anymore (the extension auto-launches the host
   app). If you ever see it, open **RightClickBuddy** once from `/Applications`.
 - **Menu doesn't appear** — enable the extension (see *Enable the Finder extension* above), then
   open Settings and click **Reload Finder Extension** (or run `bash scripts/dev-reload-findersync.sh`).
-- **Settings won't save ("You don't have permission to save settings.json")** — the shared App
-  Group container got locked to a previous code-signing identity (e.g. after re-signing with a
-  different identity). Reset it: grant **Full Disk Access** to your terminal
-  (System Settings ▸ Privacy & Security ▸ Full Disk Access), then run
-  `bash scripts/dev-reset-container.sh`. Fresh installs are unaffected.
+  Re-enabling in System Settings is sometimes needed after re-signing with a different identity.
+- **A custom scope folder shows the app's icon** — this is macOS marking folders the extension
+  watches (system folders like Downloads are exempt). The folder itself isn't modified; remove it
+  from **Settings ▸ Scope** to revert.
 - **Rebuilding after code changes** — just re-run `bash scripts/dev-deploy-adhoc.sh`.
 
 ## Scripts

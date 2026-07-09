@@ -83,6 +83,8 @@ final class FinderSync: FIFinderSync {
     override init() {
         super.init()
 
+        // Best-effort: refresh the settings cache from the main app so scope is correct at launch.
+        RCBSettings.refreshExtensionCacheFromMainApp()
         applyScopeIfNeeded(settings: RCBSettings.loadCached())
 
         let realHome = resolvedRealUserHomeDirectoryURL().path
@@ -405,6 +407,11 @@ final class FinderSync: FIFinderSync {
 
     override func menu(for menuKind: FIMenuKind) -> NSMenu {
         fileLog.info("▶ menu(for:) kind=\(menuKind.rawValue)")
+
+        // Pull the latest settings from the main app over IPC before building the menu, so scope
+        // roots / toggles the user just changed take effect. Falls back to the local cache if the
+        // app isn't reachable.
+        RCBSettings.refreshExtensionCacheFromMainApp()
 
         let targeted = FIFinderSyncController.default().targetedURL()
         let selected = FIFinderSyncController.default().selectedItemURLs()

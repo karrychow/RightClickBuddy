@@ -298,7 +298,7 @@ struct RCBSettings: Codable, Equatable {
     private static func realUserHomeDirectoryForSettings() -> URL {
         // FinderSync runs in a sandbox container where homeDirectoryForCurrentUser points to:
         //   ~/Library/Containers/<bundle>/Data
-        // Settings are stored in the real user home so the host app and FinderSync can share them.
+        // The main app runs unsandboxed, so this returns the real user home there.
         let home = FileManager.default.homeDirectoryForCurrentUser
         if home.path.contains("/Library/Containers/") {
             return URL(fileURLWithPath: "/Users/\(NSUserName())", isDirectory: true)
@@ -306,67 +306,80 @@ struct RCBSettings: Codable, Equatable {
         return home
     }
 
-    /// Old settings URL in the real user home (used before migrating to App Group).
-    private static func oldSettingsURL() -> URL {
+    /// True when this code runs inside the FinderSync app extension (vs. the main app).
+    static var isRunningInExtension: Bool {
+        Bundle.main.bundleURL.pathExtension == "appex"
+    }
+
+    /// Canonical settings file, owned by the (non-sandboxed) main app in the real user home.
+    ///
+    /// We deliberately DON'T use the App Group container: an ad-hoc-signed build can't access the
+    /// data-vault-protected group container. A plain Application Support path is always writable by
+    /// the unsandboxed main app, and the sandboxed extension gets a copy over IPC (see
+    /// `refreshExtensionCacheFromMainApp`). This lets the whole app work fully with ad-hoc signing.
+    static func mainAppSettingsURL() -> URL {
         realUserHomeDirectoryForSettings()
             .appendingPathComponent("Library/Application Support", isDirectory: true)
             .appendingPathComponent(appSupportFolderName, isDirectory: true)
             .appendingPathComponent(settingsFileName, isDirectory: false)
     }
 
-    static func settingsURL() -> URL {
-        // Use the App Group container so both the main app and the sandboxed
-        // FinderSync extension can reliably read/write the same file.
-        guard let container = FileManager.default
-            .containerURL(forSecurityApplicationGroupIdentifier: RCBAppGroup.id)
-        else {
-            return oldSettingsURL()
-        }
-        return container
+    /// Read-through cache kept inside the extension's OWN sandbox container (always writable by the
+    /// extension itself). Refreshed from the main app via `refreshExtensionCacheFromMainApp()`.
+    private static func extensionCacheURL() -> URL {
+        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSHomeDirectory(), isDirectory: true)
+                .appendingPathComponent("Library/Application Support", isDirectory: true)
+        return base
             .appendingPathComponent(appSupportFolderName, isDirectory: true)
-            .appendingPathComponent(settingsFileName, isDirectory: false)
+            .appendingPathComponent("settings-cache.json", isDirectory: false)
+    }
+
+    private static func decodeNormalized(_ data: Data) -> RCBSettings? {
+        (try? JSONDecoder().decode(RCBSettings.self, from: data))?.normalized()
     }
 
     static func load() -> RCBSettings {
-        let url = settingsURL()
+        isRunningInExtension ? loadExtensionCache() : loadMainAppFile()
+    }
 
-        // Migrate from old path (real user home) to App Group container.
-        if !FileManager.default.fileExists(atPath: url.path) {
-            let old = oldSettingsURL()
-            if FileManager.default.fileExists(atPath: old.path) {
-                AppLogger.settings.info("Migrating settings from \(old.path) to \(url.path)")
-                try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-                try? FileManager.default.copyItem(at: old, to: url)
-            }
-        }
-
-        guard let data = try? Data(contentsOf: url) else {
+    private static func loadMainAppFile() -> RCBSettings {
+        let url = mainAppSettingsURL()
+        guard let data = try? Data(contentsOf: url), let decoded = decodeNormalized(data) else {
             AppLogger.settings.info("No settings file found, using defaults")
             return defaultSettings
         }
-        do {
-            let decoded = try JSONDecoder().decode(RCBSettings.self, from: data)
-            AppLogger.settings.info("Settings loaded from \(url.path)")
-            return decoded.normalized()
-        } catch {
-            AppLogger.settings.error("Failed to decode settings: \(error.localizedDescription), using defaults")
+        AppLogger.settings.info("Settings loaded from \(url.path)")
+        return decoded
+    }
+
+    private static func loadExtensionCache() -> RCBSettings {
+        guard let data = try? Data(contentsOf: extensionCacheURL()), let decoded = decodeNormalized(data) else {
             return defaultSettings
         }
+        return decoded
     }
 
     static func save(_ settings: RCBSettings) throws {
-        let url = settingsURL()
-        let dir = url.deletingLastPathComponent()
-        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-
+        // Only the main app persists settings.
+        let url = mainAppSettingsURL()
+        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         let data = try JSONEncoder().encode(settings.normalized())
         try data.write(to: url, options: [.atomic])
         AppLogger.settings.info("Settings saved to \(url.path)")
     }
 
-    /// Always reload from disk. The mtime-based cache was unreliable across
-    /// processes (main app vs. sandboxed extension) because Date comparison
-    /// precision and sandbox file access made it miss updates.
+    /// Extension only: pull the latest settings from the main app over IPC and refresh the local
+    /// cache. Fails silently to the existing cache if the app isn't reachable, so it's safe to call
+    /// on the menu-building path.
+    static func refreshExtensionCacheFromMainApp() {
+        guard isRunningInExtension else { return }
+        guard let data = try? IPCTcpClient.getSettings(), decodeNormalized(data) != nil else { return }
+        let url = extensionCacheURL()
+        try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try? data.write(to: url, options: [.atomic])
+    }
+
     static func loadCached() -> RCBSettings {
         load()
     }

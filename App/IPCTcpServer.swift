@@ -25,7 +25,6 @@ final class IPCTcpServer {
                 case .ready:
                     if let port = self.listener?.port {
                         self.port = port.rawValue
-                        self.writePortFile()
                         self.logger.info("TCP server ready on port \(port.rawValue)")
                         AppLogger.app.info("IPC TCP server ready on port \(port.rawValue)")
                     }
@@ -45,24 +44,6 @@ final class IPCTcpServer {
         } catch {
             logger.error("Failed to start TCP listener: \(error.localizedDescription)")
             AppLogger.app.error("IPC TCP server start failed: \(error.localizedDescription)")
-        }
-    }
-
-    // MARK: - Port File
-
-    private func writePortFile() {
-        guard let container = FileManager.default
-            .containerURL(forSecurityApplicationGroupIdentifier: "group.com.karry.RightClickBuddy")
-        else {
-            AppLogger.app.error("IPC TCP: containerURL is nil")
-            return
-        }
-        let portURL = container.appendingPathComponent("tcp_port", isDirectory: false)
-        do {
-            try "\(port)".write(to: portURL, atomically: true, encoding: .utf8)
-            AppLogger.app.info("IPC TCP: wrote port \(port) to \(portURL.path)")
-        } catch {
-            AppLogger.app.error("IPC TCP: failed to write port: \(error.localizedDescription)")
         }
     }
 
@@ -118,9 +99,24 @@ final class IPCTcpServer {
             return handleCopyItem(request)
         case "openWithApps":
             return handleOpenWithApps(request)
+        case "getSettings":
+            return handleGetSettings(request)
         default:
             return IPCResponse(id: request.id, success: false, path: nil, error: "Unknown request type: \(request.type)")
         }
+    }
+
+    private func handleGetSettings(_ request: IPCRequest) -> IPCResponse {
+        // Return the settings the main app persists (in its own, always-writable location).
+        // Falls back to encoded defaults so the extension always has something valid.
+        let url = RCBSettings.mainAppSettingsURL()
+        if let data = try? Data(contentsOf: url) {
+            return IPCResponse(id: request.id, success: true, path: nil, error: nil, payload: data)
+        }
+        if let data = try? JSONEncoder().encode(RCBSettings.defaultSettings) {
+            return IPCResponse(id: request.id, success: true, path: nil, error: nil, payload: data)
+        }
+        return IPCResponse(id: request.id, success: false, path: nil, error: "settings unavailable")
     }
 
     private func handleCreateFile(_ request: IPCRequest) -> IPCResponse {
