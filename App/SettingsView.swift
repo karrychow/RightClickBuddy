@@ -466,8 +466,6 @@ struct SettingsView: View {
                     }
 
                     logCard
-
-                    permissionsCard
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 16)
@@ -813,67 +811,6 @@ struct SettingsView: View {
             }
             try? await Task.sleep(nanoseconds: 2_000_000_000)
         }
-    }
-
-    // MARK: - Permissions
-
-    @State private var hasFullDiskAccess: Bool = false
-
-    private var permissionsCard: some View {
-        SectionCard {
-            SectionHeader(icon: "lock.shield", title: RCLocalizedString("权限"))
-
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 10) {
-                    Image(systemName: hasFullDiskAccess ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .foregroundStyle(hasFullDiskAccess ? .green : .red)
-                    Text(RCLocalizedString("完全磁盘访问权限"))
-                        .font(.body)
-                    Spacer()
-                    Text(hasFullDiskAccess ? RCLocalizedString("已授权") : RCLocalizedString("未授权"))
-                        .font(.caption)
-                        .foregroundStyle(hasFullDiskAccess ? .green : .red)
-                }
-
-                if !hasFullDiskAccess {
-                    Text(RCLocalizedString("扩展需要完全磁盘访问权限才能在所有目录下创建文件。"))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-
-                    Button(RCLocalizedString("打开系统设置")) {
-                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") {
-                            NSWorkspace.shared.open(url)
-                        }
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                }
-            }
-        }
-        .task {
-            checkFullDiskAccess()
-            // Poll for changes (user may switch to System Settings and grant access)
-            while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 3_000_000_000)
-                if hasFullDiskAccess { break }
-                checkFullDiskAccess()
-            }
-        }
-    }
-
-    private func checkFullDiskAccess() {
-        // Test by trying to read a path that requires Full Disk Access.
-        let testPaths = [
-            "/Library/Application Support/com.apple.TCC/TCC.db",
-            "/var/db/ConfigurationProfiles/Store/",
-        ]
-        for path in testPaths {
-            if FileManager.default.isReadableFile(atPath: path) {
-                hasFullDiskAccess = true
-                return
-            }
-        }
-        hasFullDiskAccess = false
     }
 
     // MARK: - Save
