@@ -138,7 +138,7 @@ struct SettingsView: View {
         .padding(16)
         .frame(width: 740, height: 640)
         .onChange(of: settings) { _ in
-            saveSettings()
+            Task { saveSettings() }
         }
     }
 
@@ -151,6 +151,7 @@ struct SettingsView: View {
                     languageCard
                     menuCard
                     scopeCard
+                    extensionCard
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 16)
@@ -193,6 +194,9 @@ struct SettingsView: View {
                 ToggleRow(icon: "doc.text", label: RCLocalizedString("显示 Templates"), isOn: bindingForShowTemplates())
                 ToggleRow(icon: "doc.fill", label: RCLocalizedString("显示 Office"), isOn: bindingForShowOffice())
                 ToggleRow(icon: "arrow.up.forward.app", label: RCLocalizedString("显示 Open With"), isOn: bindingForShowOpenWith())
+                Divider()
+                    .padding(.leading, 30)
+                ToggleRow(icon: "menubar.rectangle", label: RCLocalizedString("显示菜单栏图标"), isOn: bindingForShowMenuBarIcon())
             }
         }
     }
@@ -282,6 +286,31 @@ struct SettingsView: View {
         }
     }
 
+    // MARK: - Extension Management
+
+    private var extensionCard: some View {
+        SectionCard {
+            SectionHeader(icon: "gearshape", title: "Finder Extension")
+
+            VStack(alignment: .leading, spacing: 10) {
+                Button("Open Extension Settings…") {
+                    if let url = URL(string: "x-apple.systempreferences:com.apple.LoginItems-Settings.extension") {
+                        NSWorkspace.shared.open(url)
+                    }
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+
+                Button("Reload Finder Extension") {
+                    reloadFinderExtensionAction()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .tint(.accentColor)
+            }
+        }
+    }
+
     // MARK: - Templates Tab
 
     private var templatesTab: some View {
@@ -314,6 +343,11 @@ struct SettingsView: View {
 
             settingsFooter
         }
+        .onAppear {
+            if expandedCategories.isEmpty {
+                expandedCategories = Set(settings.allTemplateSpecs.map(\.category))
+            }
+        }
         .sheet(isPresented: $showTemplateEditor) {
             TemplateEditView(
                 spec: $editingTemplate,
@@ -339,12 +373,13 @@ struct SettingsView: View {
             Button(RCLocalizedString("取消"), role: .cancel) { }
             Button(RCLocalizedString("确定")) {
                 let trimmed = newCategoryName.trimmingCharacters(in: .whitespaces)
-                if !trimmed.isEmpty, trimmed != categoryToRename {
-                    settings.renameCategory(from: categoryToRename, to: trimmed)
+                let targetKey = LanguageManager.originalKey(for: trimmed) ?? trimmed
+                if !targetKey.isEmpty, targetKey != categoryToRename {
+                    settings.renameCategory(from: categoryToRename, to: targetKey)
                 }
             }
         } message: {
-            Text(String(format: RCLocalizedString("将「%@」重命名为："), categoryToRename))
+            Text(String(format: RCLocalizedString("将「%@」重命名为："), RCLocalizedString(categoryToRename)))
         }
         .alert(RCLocalizedString("删除分类"), isPresented: $showDeleteCategoryConfirm) {
             Button(RCLocalizedString("取消"), role: .cancel) { }
@@ -352,7 +387,7 @@ struct SettingsView: View {
                 settings.removeAllCustomTemplates(inCategory: categoryToDelete)
             }
         } message: {
-            Text(String(format: RCLocalizedString("确定删除分类「%@」及其所有自定义模板？此操作不可撤销。"), categoryToDelete))
+            Text(String(format: RCLocalizedString("确定删除分类「%@」及其所有自定义模板？此操作不可撤销。"), RCLocalizedString(categoryToDelete)))
         }
     }
 
@@ -429,6 +464,10 @@ struct SettingsView: View {
                             .tint(.red)
                         }
                     }
+
+                    logCard
+
+                    permissionsCard
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 16)
@@ -483,9 +522,6 @@ struct SettingsView: View {
 
     private var templateList: some View {
         let allSpecs = settings.allTemplateSpecs
-        if expandedCategories.isEmpty {
-            expandedCategories = Set(allSpecs.map(\.category))
-        }
         let grouped = Dictionary(grouping: allSpecs, by: { $0.category })
         let filtered: [(String, [RCBSettings.TemplateSpec])]
         if templateSearchText.isEmpty {
@@ -523,7 +559,7 @@ struct SettingsView: View {
                     Menu {
                         Button(RCLocalizedString("重命名分类")) {
                             categoryToRename = category
-                            newCategoryName = category
+                            newCategoryName = RCLocalizedString(category)
                             showCategoryRenameAlert = true
                         }
                         if !settings.customTemplateIDs(inCategory: category).isEmpty {
@@ -659,6 +695,187 @@ struct SettingsView: View {
         }
     }
 
+    // MARK: - Log Viewer
+
+    @State private var logLines: [String] = []
+    @State private var logRefreshPaused = false
+    @State private var logTimer: Task<Void, Never>?
+
+    private var logCard: some View {
+        SectionCard {
+            SectionHeader(icon: "doc.text.magnifyingglass", title: RCLocalizedString("日志"))
+
+            VStack(alignment: .leading, spacing: 8) {
+                // Toolbar
+                HStack(spacing: 8) {
+                    Toggle(RCLocalizedString("暂停刷新"), isOn: $logRefreshPaused)
+                        .toggleStyle(.switch)
+                        .controlSize(.small)
+                        .font(.caption)
+
+                    Spacer()
+
+                    Button(RCLocalizedString("打开日志文件夹")) {
+                        NSWorkspace.shared.open(AppLogger.logsDirectoryURL())
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+
+                    Button(RCLocalizedString("复制日志")) {
+                        let text = AppLogger.exportAllLogs()
+                        let pb = NSPasteboard.general
+                        pb.clearContents()
+                        pb.setString(text, forType: .string)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+
+                // Log content
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 1) {
+                        ForEach(Array(logLines.suffix(100).enumerated()), id: \.offset) { _, line in
+                            Text(line)
+                                .font(.system(size: 9, design: .monospaced))
+                                .foregroundStyle(logLineColor(line))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(maxWidth: .infinity, minHeight: 120, maxHeight: 200)
+                .padding(8)
+                .background(
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color(.textBackgroundColor))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color(.separatorColor).opacity(0.15), lineWidth: 1)
+                )
+
+                // Crash report banner
+                if AppLogger.hasPendingCrashReport() {
+                    HStack(spacing: 6) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.red)
+                        Text(RCLocalizedString("检测到上次会话存在崩溃"))
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                        Spacer()
+                        if let report = AppLogger.pendingCrashReport() {
+                            Button(RCLocalizedString("复制崩溃报告")) {
+                                let pb = NSPasteboard.general
+                                pb.clearContents()
+                                pb.setString(report, forType: .string)
+                            }
+                            .buttonStyle(.borderless)
+                            .controlSize(.small)
+                            .foregroundStyle(.red)
+                        }
+                        Button(RCLocalizedString("清除")) {
+                            AppLogger.clearCrashReports()
+                        }
+                        .buttonStyle(.borderless)
+                        .controlSize(.small)
+                    }
+                    .padding(8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Color.red.opacity(0.08))
+                    )
+                }
+            }
+        }
+        .task {
+            await refreshLogsLoop()
+        }
+        .onDisappear {
+            logTimer?.cancel()
+        }
+    }
+
+    private func logLineColor(_ line: String) -> Color {
+        if line.contains("| ERROR |") || line.contains("| FAULT |") || line.contains("| CRASH |") {
+            return .red
+        }
+        if line.contains("| INFO |") {
+            return .secondary
+        }
+        return .primary
+    }
+
+    private func refreshLogsLoop() async {
+        while !Task.isCancelled {
+            if !logRefreshPaused {
+                logLines = AppLogger.readRecentLogs(limit: 200)
+            }
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+        }
+    }
+
+    // MARK: - Permissions
+
+    @State private var hasFullDiskAccess: Bool = false
+
+    private var permissionsCard: some View {
+        SectionCard {
+            SectionHeader(icon: "lock.shield", title: RCLocalizedString("权限"))
+
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 10) {
+                    Image(systemName: hasFullDiskAccess ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .foregroundStyle(hasFullDiskAccess ? .green : .red)
+                    Text(RCLocalizedString("完全磁盘访问权限"))
+                        .font(.body)
+                    Spacer()
+                    Text(hasFullDiskAccess ? RCLocalizedString("已授权") : RCLocalizedString("未授权"))
+                        .font(.caption)
+                        .foregroundStyle(hasFullDiskAccess ? .green : .red)
+                }
+
+                if !hasFullDiskAccess {
+                    Text(RCLocalizedString("扩展需要完全磁盘访问权限才能在所有目录下创建文件。"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    Button(RCLocalizedString("打开系统设置")) {
+                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+            }
+        }
+        .task {
+            checkFullDiskAccess()
+            // Poll for changes (user may switch to System Settings and grant access)
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 3_000_000_000)
+                if hasFullDiskAccess { break }
+                checkFullDiskAccess()
+            }
+        }
+    }
+
+    private func checkFullDiskAccess() {
+        // Test by trying to read a path that requires Full Disk Access.
+        let testPaths = [
+            "/Library/Application Support/com.apple.TCC/TCC.db",
+            "/var/db/ConfigurationProfiles/Store/",
+        ]
+        for path in testPaths {
+            if FileManager.default.isReadableFile(atPath: path) {
+                hasFullDiskAccess = true
+                return
+            }
+        }
+        hasFullDiskAccess = false
+    }
+
     // MARK: - Save
 
     private func saveSettings() {
@@ -693,6 +910,16 @@ struct SettingsView: View {
 
     private func bindingForShowOpenWith() -> Binding<Bool> {
         Binding(get: { settings.menu.showOpenWith }, set: { settings.menu.showOpenWith = $0 })
+    }
+
+    private func bindingForShowMenuBarIcon() -> Binding<Bool> {
+        Binding(
+            get: { settings.menu.showMenuBarIcon },
+            set: {
+                settings.menu.showMenuBarIcon = $0
+                NotificationCenter.default.post(name: .RCBMenuBarIconDidChange, object: nil)
+            }
+        )
     }
 
     private func bindingForTemplate(id: String) -> Binding<Bool> {
@@ -750,7 +977,15 @@ struct SettingsView: View {
             return standardized.path
         }()
 
-        // Create and persist security-scoped bookmark (in App Group UserDefaults).
+        // Home-directory paths don't need security-scoped bookmarks — the extension accesses them directly.
+        if standardized.path.hasPrefix(home.path) {
+            if !settings.scopeRoots.contains(scopeRootKey) {
+                settings.scopeRoots.append(scopeRootKey)
+            }
+            return
+        }
+
+        // Create and persist security-scoped bookmark for non-home paths.
         do {
             let bookmark = try standardized.bookmarkData(options: [.withSecurityScope], includingResourceValuesForKeys: nil, relativeTo: nil)
             RCBScopeRootBookmarkStore.setBookmark(bookmark, forScopeRoot: scopeRootKey)
@@ -760,6 +995,43 @@ struct SettingsView: View {
             }
         } catch {
             scopeRootsError = String(format: RCLocalizedString("保存目录授权失败：%@"), error.localizedDescription)
+        }
+    }
+
+    // MARK: - Reload Finder Extension
+
+    private func reloadFinderExtensionAction() {
+        let extId = "com.karry.RightClickBuddy.FinderSync"
+
+        func run(_ executable: String, _ args: [String]) throws {
+            let task = Process()
+            task.executableURL = URL(fileURLWithPath: executable)
+            task.arguments = args
+
+            let pipe = Pipe()
+            task.standardOutput = pipe
+            task.standardError = pipe
+
+            try task.run()
+            task.waitUntilExit()
+
+            if task.terminationStatus != 0 {
+                let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                let output = String(decoding: data, as: UTF8.self)
+                throw NSError(domain: "RightClickBuddy", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: output])
+            }
+        }
+
+        do {
+            try run("/usr/bin/pluginkit", ["-e", "ignore", "-i", extId])
+            try run("/usr/bin/pluginkit", ["-e", "use", "-i", extId])
+            try run("/usr/bin/killall", ["Finder"])
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = "Reload Failed"
+            alert.informativeText = error.localizedDescription
+            alert.addButton(withTitle: "OK")
+            _ = alert.runModal()
         }
     }
 }
@@ -772,6 +1044,16 @@ struct TemplateEditView: View {
     let onSave: (RCBSettings.TemplateSpec) -> Void
     let onCancel: () -> Void
 
+    @State private var displayCategory: String = ""
+
+    init(spec: Binding<RCBSettings.TemplateSpec>, isNew: Bool, onSave: @escaping (RCBSettings.TemplateSpec) -> Void, onCancel: @escaping () -> Void) {
+        self._spec = spec
+        self.isNew = isNew
+        self.onSave = onSave
+        self.onCancel = onCancel
+        self._displayCategory = State(initialValue: RCLocalizedString(spec.wrappedValue.category))
+    }
+
     var body: some View {
         VStack(spacing: 16) {
             Text(isNew ? RCLocalizedString("添加模板") : RCLocalizedString("编辑模板"))
@@ -780,7 +1062,7 @@ struct TemplateEditView: View {
             Form {
                 TextField(RCLocalizedString("标题（显示名称）"), text: $spec.title)
                 TextField(RCLocalizedString("文件名"), text: $spec.fileName)
-                TextField(RCLocalizedString("分类"), text: $spec.category)
+                TextField(RCLocalizedString("分类"), text: $displayCategory)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(RCLocalizedString("模板内容"))
@@ -802,6 +1084,11 @@ struct TemplateEditView: View {
                 Spacer()
 
                 Button(RCLocalizedString("保存")) {
+                    if let originalKey = LanguageManager.originalKey(for: displayCategory) {
+                        spec.category = originalKey
+                    } else {
+                        spec.category = displayCategory
+                    }
                     onSave(spec)
                 }
                 .buttonStyle(.borderedProminent)

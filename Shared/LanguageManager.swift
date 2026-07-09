@@ -2,6 +2,7 @@ import Foundation
 
 extension Notification.Name {
     static let RCBLanguageDidChange = Notification.Name("RCBLanguageDidChange")
+    static let RCBMenuBarIconDidChange = Notification.Name("RCBMenuBarIconDidChange")
 }
 
 enum LanguageManager {
@@ -9,7 +10,13 @@ enum LanguageManager {
 
     static var preferredLanguage: String {
         get { RCBAppGroup.defaults?.string(forKey: preferredLanguageKey) ?? "" }
-        set { RCBAppGroup.defaults?.set(newValue.isEmpty ? nil : newValue, forKey: preferredLanguageKey) }
+        set {
+            let old = preferredLanguage
+            RCBAppGroup.defaults?.set(newValue.isEmpty ? nil : newValue, forKey: preferredLanguageKey)
+            if newValue != old {
+                AppLogger.settings.info("Language changed: \"\(old)\" → \"\(newValue)\"")
+            }
+        }
     }
 
     static func localizedString(_ key: String, comment: String = "") -> String {
@@ -21,6 +28,26 @@ enum LanguageManager {
     }
 
     private static var stringsCache: [String: [String: String]] = [:]
+    private static var reverseStringsCache: [String: [String: String]] = [:]
+
+    /// Given a localized (English) value, find the original key from en.lproj.
+    /// E.g. "Templates" → "模板", "Entry Files" → "入口文件".
+    /// Returns nil if the value doesn't match any key in the table.
+    static func originalKey(for localizedValue: String, fromLanguage: String = "en") -> String? {
+        if let cached = reverseStringsCache[fromLanguage] {
+            return cached[localizedValue]
+        }
+        guard let lprojPath = Bundle.main.path(forResource: fromLanguage, ofType: "lproj") else {
+            return nil
+        }
+        let stringsPath = (lprojPath as NSString).appendingPathComponent("Localizable.strings")
+        guard let dict = NSDictionary(contentsOfFile: stringsPath) as? [String: String] else {
+            return nil
+        }
+        let reverse = Dictionary(uniqueKeysWithValues: dict.map { ($0.value, $0.key) })
+        reverseStringsCache[fromLanguage] = reverse
+        return reverse[localizedValue]
+    }
 
     private static func localizedStringFromTable(_ key: String, language: String) -> String? {
         if let cached = stringsCache[language] {

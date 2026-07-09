@@ -8,17 +8,12 @@
 	<array>
 		<string>group.com.karry.RightClickBuddy</string>
 	</array>
-	<key>com.apple.security.files.bookmarks.app-scope</key>
+<!-- files.all removed: triggers macOS privacy dialog for File Provider dirs -->
+		<key>com.apple.security.network.client</key>
 	<true/>
-	<key>com.apple.security.temporary-exception.files.home-relative-path.read-write</key>
+	<key>com.apple.security.mach-lookup.global-name</key>
 	<array>
-		<string>/Desktop</string>
-		<string>/Downloads</string>
-		<string>/Movies</string>
-		<string>/Music</string>
-		<string>/Pictures</string>
-		<string>/Library/Mobile Documents</string>
-		<string>/Library/CloudStorage</string>
+		<string>com.karry.RightClickBuddy.ipc</string>
 	</array>
 </dict>
 </plist>

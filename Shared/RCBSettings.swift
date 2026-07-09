@@ -57,6 +57,28 @@ struct RCBSettings: Codable, Equatable {
         var showTemplates: Bool = true
         var showOffice: Bool = true
         var showOpenWith: Bool = true
+        var showMenuBarIcon: Bool = true
+
+        // Use decodeIfPresent for all properties so adding new fields doesn't
+        // break decoding of existing persisted settings files.
+        init(enabled: Bool = true, showNew: Bool = true, showTemplates: Bool = true, showOffice: Bool = true, showOpenWith: Bool = true, showMenuBarIcon: Bool = true) {
+            self.enabled = enabled
+            self.showNew = showNew
+            self.showTemplates = showTemplates
+            self.showOffice = showOffice
+            self.showOpenWith = showOpenWith
+            self.showMenuBarIcon = showMenuBarIcon
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            self.enabled = try container.decodeIfPresent(Bool.self, forKey: .enabled) ?? true
+            self.showNew = try container.decodeIfPresent(Bool.self, forKey: .showNew) ?? true
+            self.showTemplates = try container.decodeIfPresent(Bool.self, forKey: .showTemplates) ?? true
+            self.showOffice = try container.decodeIfPresent(Bool.self, forKey: .showOffice) ?? true
+            self.showOpenWith = try container.decodeIfPresent(Bool.self, forKey: .showOpenWith) ?? true
+            self.showMenuBarIcon = try container.decodeIfPresent(Bool.self, forKey: .showMenuBarIcon) ?? true
+        }
     }
 
     struct TemplateSpec: Codable, Identifiable, Equatable {
@@ -284,22 +306,50 @@ struct RCBSettings: Codable, Equatable {
         return home
     }
 
-    static func settingsURL() -> URL {
+    /// Old settings URL in the real user home (used before migrating to App Group).
+    private static func oldSettingsURL() -> URL {
         realUserHomeDirectoryForSettings()
             .appendingPathComponent("Library/Application Support", isDirectory: true)
             .appendingPathComponent(appSupportFolderName, isDirectory: true)
             .appendingPathComponent(settingsFileName, isDirectory: false)
     }
 
+    static func settingsURL() -> URL {
+        // Use the App Group container so both the main app and the sandboxed
+        // FinderSync extension can reliably read/write the same file.
+        guard let container = FileManager.default
+            .containerURL(forSecurityApplicationGroupIdentifier: RCBAppGroup.id)
+        else {
+            return oldSettingsURL()
+        }
+        return container
+            .appendingPathComponent(appSupportFolderName, isDirectory: true)
+            .appendingPathComponent(settingsFileName, isDirectory: false)
+    }
+
     static func load() -> RCBSettings {
         let url = settingsURL()
+
+        // Migrate from old path (real user home) to App Group container.
+        if !FileManager.default.fileExists(atPath: url.path) {
+            let old = oldSettingsURL()
+            if FileManager.default.fileExists(atPath: old.path) {
+                AppLogger.settings.info("Migrating settings from \(old.path) to \(url.path)")
+                try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+                try? FileManager.default.copyItem(at: old, to: url)
+            }
+        }
+
         guard let data = try? Data(contentsOf: url) else {
+            AppLogger.settings.info("No settings file found, using defaults")
             return defaultSettings
         }
         do {
             let decoded = try JSONDecoder().decode(RCBSettings.self, from: data)
+            AppLogger.settings.info("Settings loaded from \(url.path)")
             return decoded.normalized()
         } catch {
+            AppLogger.settings.error("Failed to decode settings: \(error.localizedDescription), using defaults")
             return defaultSettings
         }
     }
@@ -311,25 +361,13 @@ struct RCBSettings: Codable, Equatable {
 
         let data = try JSONEncoder().encode(settings.normalized())
         try data.write(to: url, options: [.atomic])
+        AppLogger.settings.info("Settings saved to \(url.path)")
     }
 
-    private static var cached: (settings: RCBSettings, mtime: Date?) = (defaultSettings, nil)
-
+    /// Always reload from disk. The mtime-based cache was unreliable across
+    /// processes (main app vs. sandboxed extension) because Date comparison
+    /// precision and sandbox file access made it miss updates.
     static func loadCached() -> RCBSettings {
-        let url = settingsURL()
-        let attrs = try? FileManager.default.attributesOfItem(atPath: url.path)
-        let mtime = attrs?[.modificationDate] as? Date
-
-        if cached.mtime == nil, mtime == nil {
-            return cached.settings
-        }
-
-        if let mtime, let cachedMTime = cached.mtime, mtime == cachedMTime {
-            return cached.settings
-        }
-
-        let fresh = load()
-        cached = (fresh, mtime)
-        return fresh
+        load()
     }
 }

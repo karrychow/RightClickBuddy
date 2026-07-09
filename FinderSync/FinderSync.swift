@@ -4,6 +4,8 @@ import os
 
 final class FinderSync: FIFinderSync {
     private let logger = Logger(subsystem: "com.karry.RightClickBuddy", category: "FinderSync")
+    /// Synchronous file logger — survives extension crashes.
+    private let fileLog = ExtensionLogger(category: "FinderSync")
 
     private var lastAppliedScopeDirectories: Set<URL>?
     private var cachedRealUserHomeDirectoryURL: URL?
@@ -115,7 +117,7 @@ final class FinderSync: FIFinderSync {
     private func computeScopeDirectories(settings: RCBSettings) -> Set<URL> {
         // IMPORTANT:
         // - FinderSync's directoryURLs controls where the extension is active/observing.
-        // - For reliability, we ALWAYS include the default scope (Home + common folders).
+        // - For reliability, we ALWAYS include the default scope (common user folders).
         // - When users configure scopeRoots, we UNION them into directoryURLs so FinderSync
         //   can become active there too.
         // - Menu visibility is still controlled separately via scopeRoots filtering.
@@ -171,54 +173,31 @@ final class FinderSync: FIFinderSync {
         let home = resolvedRealUserHomeDirectoryURL()
 
         var directories = Set<URL>()
-        insertDirectory(home, into: &directories)
+
+        // Avoid scoping the home directory itself — doing so causes macOS to proactively
+        // prompt the "Keeping app data separate" privacy dialog whenever any process (e.g.
+        // a Safari file picker) traverses ~/Library/ subdirectories containing File Provider
+        // content. Instead, scope only the specific common user folders listed below.
 
         // Common folders (explicit paths under real home, plus SearchPathDirectory fallback).
         // Note: On newer macOS versions, including only the Home directory is not always sufficient
         // for FinderSync to become active in subdirectories.
-        let mobileDocumentsRoot = home
-            .appendingPathComponent("Library", isDirectory: true)
-            .appendingPathComponent("Mobile Documents", isDirectory: true)
-
-        let iCloudDriveRoot = mobileDocumentsRoot
-            .appendingPathComponent("com~apple~CloudDocs", isDirectory: true)
-
-        let cloudStorageRoot = home
-            .appendingPathComponent("Library", isDirectory: true)
-            .appendingPathComponent("CloudStorage", isDirectory: true)
-
         let explicitCommon: [URL] = [
             home.appendingPathComponent("Desktop", isDirectory: true),
             home.appendingPathComponent("Downloads", isDirectory: true),
             home.appendingPathComponent("Movies", isDirectory: true),
             home.appendingPathComponent("Music", isDirectory: true),
             home.appendingPathComponent("Pictures", isDirectory: true),
-
-            // iCloud Drive (legacy) / File Provider storage.
-            mobileDocumentsRoot,
-            iCloudDriveRoot,
-
-            // Newer macOS uses ~/Library/CloudStorage for iCloud Drive and other providers.
-            cloudStorageRoot
         ]
         for url in explicitCommon {
             insertDirectory(url, into: &directories)
         }
 
-        // Also scope immediate children under iCloud Drive roots (helps FinderSync become active reliably).
-        for root in [iCloudDriveRoot, cloudStorageRoot] {
-            if let children = try? fileManager.contentsOfDirectory(
-                at: root,
-                includingPropertiesForKeys: [.isDirectoryKey],
-                options: [.skipsHiddenFiles]
-            ) {
-                for child in children {
-                    if (try? child.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true {
-                        insertDirectory(child, into: &directories)
-                    }
-                }
-            }
-        }
+        // NOTE: Do NOT scope File Provider-backed directories (iCloud Drive, CloudStorage,
+        // ~/Library/Mobile Documents, etc.) in the default scope, because registering a
+        // sandboxed FinderSync extension to observe these directories triggers the macOS
+        // "Keeping app data separate" privacy dialog. Users who need the right-click menu
+        // in iCloud Drive / File Provider locations can add custom scope roots in Settings.
 
         let commonSearchPaths: [FileManager.SearchPathDirectory] = [
             .desktopDirectory,
@@ -425,6 +404,8 @@ final class FinderSync: FIFinderSync {
     }
 
     override func menu(for menuKind: FIMenuKind) -> NSMenu {
+        fileLog.info("▶ menu(for:) kind=\(menuKind.rawValue)")
+
         let targeted = FIFinderSyncController.default().targetedURL()
         let selected = FIFinderSyncController.default().selectedItemURLs()
 
@@ -518,7 +499,6 @@ final class FinderSync: FIFinderSync {
             if let creationDirectory { createFolderItem.representedObject = creationDirectory }
             createFolderItem.isEnabled = (creationDirectory != nil)
             createMenu.addItem(createFolderItem)
-            createMenu.addItem(NSMenuItem.separator())
 
             let createTxtItem = NSMenuItem(title: RCLocalizedString("新建文本 (txt)"), action: #selector(createNewTextFile(_:)), keyEquivalent: "")
             if let creationDirectory { createTxtItem.representedObject = creationDirectory }
@@ -550,8 +530,6 @@ final class FinderSync: FIFinderSync {
             createPagesItem.isEnabled = (creationDirectory != nil) && canCreatePagesDocument
             createMenu.addItem(createPagesItem)
 
-            createMenu.addItem(NSMenuItem.separator())
-
             let pasteTextItem = NSMenuItem(title: RCLocalizedString("从剪贴板新建文本 (txt)"), action: #selector(createTextFromPasteboard(_:)), keyEquivalent: "")
             if let creationDirectory { pasteTextItem.representedObject = creationDirectory }
             pasteTextItem.isEnabled = (creationDirectory != nil)
@@ -580,7 +558,6 @@ final class FinderSync: FIFinderSync {
                     let dirItem = NSMenuItem(title: String(format: RCLocalizedString("目录: %@"), creationDirectory.path), action: nil, keyEquivalent: "")
                     dirItem.isEnabled = false
                     templatesMenu.addItem(dirItem)
-                    templatesMenu.addItem(NSMenuItem.separator())
                 }
                 #endif
 
@@ -601,7 +578,6 @@ final class FinderSync: FIFinderSync {
                 }
                 if !templatesMenu.items.isEmpty {
                     let templatesSubmenuItem = NSMenuItem(title: RCLocalizedString("模板"), action: nil, keyEquivalent: "")
-                    createMenu.addItem(NSMenuItem.separator())
                     createMenu.addItem(templatesSubmenuItem)
                     createMenu.setSubmenu(templatesMenu, for: templatesSubmenuItem)
                 }
@@ -646,13 +622,17 @@ final class FinderSync: FIFinderSync {
                 let dirItem = NSMenuItem(title: String(format: RCLocalizedString("目录: %@"), creationDirectory.path), action: nil, keyEquivalent: "")
                 dirItem.isEnabled = false
                 openWithMenu.addItem(dirItem)
-                openWithMenu.addItem(NSMenuItem.separator())
             }
             #endif
 
-            for (idx, spec) in RCBSettings.openWithSpecs.enumerated() {
+            let openWithSpecs = RCBSettings.openWithSpecs
+            logger.info("openWith menu build specsCount=\(openWithSpecs.count)")
+            for (idx, spec) in openWithSpecs.enumerated() {
                 guard settings.isOpenWithEnabled(spec.id) else { continue }
-                guard let appURL = FinderCommandHandler.resolveInstalledApplicationURL(bundleIdCandidates: spec.bundleIdCandidates) else { continue }
+                guard let appURL = FinderCommandHandler.resolveOpenWithAppURL(specId: spec.id, bundleIdCandidates: spec.bundleIdCandidates) else {
+                    logger.info("openWith skip specId=\(spec.id, privacy: .public) title=\(spec.title, privacy: .public) — not resolved")
+                    continue
+                }
 
                 let displayName: String = {
                     if let bundle = Bundle(url: appURL) {
@@ -665,6 +645,8 @@ final class FinderSync: FIFinderSync {
                     }
                     return spec.title
                 }()
+
+                logger.info("openWith add specId=\(spec.id, privacy: .public) displayName=\(displayName, privacy: .public)")
 
                 let folderItem = NSMenuItem(
                     title: String(format: RCLocalizedString("在 %@ 打开目录"), displayName),
@@ -703,14 +685,6 @@ final class FinderSync: FIFinderSync {
                 }
 
                 openWithMenu.addItem(selectionItem)
-
-                // Group per-app actions.
-                openWithMenu.addItem(NSMenuItem.separator())
-            }
-
-            // Trim trailing separator.
-            if let last = openWithMenu.items.last, last.isSeparatorItem {
-                openWithMenu.removeItem(last)
             }
 
             if !openWithMenu.items.isEmpty {
@@ -855,6 +829,32 @@ final class FinderSync: FIFinderSync {
         _ = alert.runModal()
     }
 
+    /// Open the given URLs in the target app.
+    ///
+    /// A sandboxed FinderSync extension is NOT allowed to hand a folder/file URL to another
+    /// application (LaunchServices denies it — macOS shows "… does not have permission to open …").
+    /// So we delegate to the NON-sandboxed main app over IPC, which runs `/usr/bin/open -a`.
+    /// The IPC layer auto-launches the main app if it isn't running, so this works even after a
+    /// cold start.
+    private func openURLs(_ urls: [URL], inAppAt appURL: URL, context: String) {
+        let filePaths = urls.map { $0.standardizedFileURL.path }
+        logger.info("openWith(\(context, privacy: .public)) delegate app=\(appURL.path, privacy: .public) count=\(filePaths.count)")
+
+        // IPC blocks on a socket round-trip (and may launch the main app) — keep it off the main thread.
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self else { return }
+            do {
+                try IPCTcpClient.openWithApps(appPath: appURL.path, filePaths: filePaths)
+                self.logger.info("openWith(\(context, privacy: .public)) success")
+            } catch {
+                self.logger.error("openWith(\(context, privacy: .public)) failed: \(error.localizedDescription, privacy: .public)")
+                DispatchQueue.main.async {
+                    self.showAlert(messageText: RCLocalizedString("无法打开"), informativeText: error.localizedDescription)
+                }
+            }
+        }
+    }
+
     @objc private func openFolderInOpenWithApp(_ sender: NSMenuItem) {
         // AppKit UI must be on the main thread; Finder may invoke actions off-main.
         if !Thread.isMainThread {
@@ -885,32 +885,14 @@ final class FinderSync: FIFinderSync {
             }
         }
 
-        guard let appURL = FinderCommandHandler.resolveInstalledApplicationURL(bundleIdCandidates: ids) else {
+        guard let appURL = FinderCommandHandler.resolveOpenWithAppURL(specId: sender.identifier?.rawValue ?? "", bundleIdCandidates: ids) else {
             logger.error("openFolderInOpenWithApp app not found")
             showAlert(messageText: RCLocalizedString("未找到应用"), informativeText: ids.joined(separator: "\n"))
             return
         }
 
         let standardizedDir = directoryURL.standardizedFileURL
-        let appBundleID = Bundle(url: appURL)?.bundleIdentifier ?? "?"
-        logger.info("openWith(folder) app=\(appBundleID, privacy: .public) appURL=\(appURL.path, privacy: .public) url=\(standardizedDir.path, privacy: .public)")
-
-        let config = NSWorkspace.OpenConfiguration()
-        config.activates = true
-        config.promptsUserIfNeeded = true
-
-        NSWorkspace.shared.open([standardizedDir], withApplicationAt: appURL, configuration: config) { runningApp, error in
-            DispatchQueue.main.async {
-                if let error {
-                    let detail = "\(error.localizedDescription)\n\n(\((error as NSError).domain) \((error as NSError).code))"
-
-                    self.showAlert(messageText: RCLocalizedString("无法打开"), informativeText: detail)
-                    self.logger.error("openWith(folder) failed app=\(appBundleID, privacy: .public) err=\(detail, privacy: .public)")
-                } else {
-                    self.logger.info("openWith(folder) success app=\(runningApp?.bundleIdentifier ?? appBundleID, privacy: .public)")
-                }
-            }
-        }
+        openURLs([standardizedDir], inAppAt: appURL, context: "folder")
     }
 
     @objc private func openSelectionInOpenWithApp(_ sender: NSMenuItem) {
@@ -929,7 +911,7 @@ final class FinderSync: FIFinderSync {
             return
         }
 
-        guard let appURL = FinderCommandHandler.resolveInstalledApplicationURL(bundleIdCandidates: ids) else {
+        guard let appURL = FinderCommandHandler.resolveOpenWithAppURL(specId: sender.identifier?.rawValue ?? "", bundleIdCandidates: ids) else {
             logger.error("openSelectionInOpenWithApp app not found")
             showAlert(messageText: RCLocalizedString("未找到应用"), informativeText: ids.joined(separator: "\n"))
             return
@@ -948,25 +930,8 @@ final class FinderSync: FIFinderSync {
             return
         }
 
-        let appBundleID = Bundle(url: appURL)?.bundleIdentifier ?? "?"
-        logger.info("openWith(selection) app=\(appBundleID, privacy: .public) appURL=\(appURL.path, privacy: .public) urlsCount=\(urls.count)")
-
-        let config = NSWorkspace.OpenConfiguration()
-        config.activates = true
-        config.promptsUserIfNeeded = true
-
-        NSWorkspace.shared.open(urls.map { $0.standardizedFileURL }, withApplicationAt: appURL, configuration: config) { runningApp, error in
-            DispatchQueue.main.async {
-                if let error {
-                    let detail = "\(error.localizedDescription)\n\n(\((error as NSError).domain) \((error as NSError).code))"
-                    self.showAlert(messageText: RCLocalizedString("无法打开"), informativeText: detail)
-                    self.logger.error("openWith(selection) failed app=\(appBundleID, privacy: .public) err=\(detail, privacy: .public)")
-
-                } else {
-                    self.logger.info("openWith(selection) success app=\(runningApp?.bundleIdentifier ?? appBundleID, privacy: .public)")
-                }
-            }
-        }
+        logger.info("openWith(selection) urlsCount=\(urls.count)")
+        openURLs(urls, inAppAt: appURL, context: "selection")
     }
 
     @objc private func createNewFolder(_ sender: NSMenuItem) {
@@ -1012,9 +977,7 @@ final class FinderSync: FIFinderSync {
         // gaining focus after the menu is shown.
         let directoryURL: URL? = lastMenuCreationDirectoryURL ?? urlFromRepresentedObject(sender.representedObject)
 
-        #if DEBUG
-        logger.info("action createFromTemplate representedObjectType=\(String(describing: type(of: sender.representedObject)))")
-        #endif
+        fileLog.info("▶ createFromTemplate id=\(sender.identifier?.rawValue ?? "?") title=\(sender.title)")
 
         guard let directoryURL else {
             logger.error("createFromTemplate no directory")
@@ -1050,12 +1013,7 @@ final class FinderSync: FIFinderSync {
             logger.info("template created \(createdURL.path, privacy: .public)")
             NSWorkspace.shared.activateFileViewerSelecting([createdURL])
         } catch {
-            let alert = NSAlert()
-            alert.messageText = RCLocalizedString("无法创建文件")
-            alert.informativeText = error.localizedDescription
-            alert.addButton(withTitle: RCLocalizedString("好"))
-            _ = alert.runModal()
-
+            fileLog.info("  error=\(error.localizedDescription)")
             logger.error("createFromTemplate failed id=\(spec.id, privacy: .public) fileName=\(spec.fileName, privacy: .public) err=\(error.localizedDescription, privacy: .public)")
         }
     }
@@ -1115,30 +1073,24 @@ final class FinderSync: FIFinderSync {
             return
         }
 
+        fileLog.info("▶ createAndRevealOfficeDocument kind=\(kind.fileExtension)")
+
         let directoryURL: URL? = lastMenuCreationDirectoryURL ?? urlFromRepresentedObject(sender.representedObject)
 
         guard let directoryURL else {
-            NSApp.activate(ignoringOtherApps: true)
-
-            let alert = NSAlert()
-            alert.messageText = RCLocalizedString("无法确定目录")
-            alert.informativeText = RCLocalizedString("Finder 没有提供当前目录（background menu 可能会这样）。\n\n请先在该窗口里点击一下文件列表再试，或对某个文件/文件夹右键。")
-            alert.addButton(withTitle: RCLocalizedString("好"))
-            _ = alert.runModal()
+            fileLog.info("  no directory URL")
+            logger.debug("Cannot create office document: no directory URL")
             return
         }
 
         do {
+            logger.debug("Creating office document kind=\(kind.fileExtension, privacy: .public) dir=\(directoryURL.path, privacy: .public)")
             let createdURL = try FinderCommandHandler.createNewOfficeDocument(in: directoryURL, fileName: kind.defaultFileName, kind: kind.fileExtension)
+            logger.debug("Office document created successfully at \(createdURL.path, privacy: .public)")
             NSWorkspace.shared.activateFileViewerSelecting([createdURL])
         } catch {
-            let alert = NSAlert()
-            alert.messageText = RCLocalizedString("无法创建文件")
-            alert.informativeText = error.localizedDescription
-            alert.addButton(withTitle: RCLocalizedString("好"))
-            _ = alert.runModal()
-
-            self.logger.error("Create file error: \(error.localizedDescription, privacy: .public)")
+            fileLog.info("  error=\(error.localizedDescription)")
+            logger.error("Office document creation failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -1185,7 +1137,6 @@ final class FinderSync: FIFinderSync {
     }
 
     private func createAndRevealIWorkDocument(kind: IWorkKind, sender: NSMenuItem) {
-        // AppKit UI must be on the main thread; Finder may invoke actions off-main.
         if !Thread.isMainThread {
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
@@ -1194,25 +1145,19 @@ final class FinderSync: FIFinderSync {
             return
         }
 
+        fileLog.info("▶ createAndRevealIWorkDocument kind=\(kind.displayName)")
+
         let directoryURL: URL? = lastMenuCreationDirectoryURL ?? urlFromRepresentedObject(sender.representedObject)
 
         guard let directoryURL else {
-            NSApp.activate(ignoringOtherApps: true)
-
-            let alert = NSAlert()
-            alert.messageText = RCLocalizedString("无法确定目录")
-            alert.informativeText = RCLocalizedString("Finder 没有提供当前目录（background menu 可能会这样）。\n\n请先在该窗口里点击一下文件列表再试，或对某个文件/文件夹右键。")
-            alert.addButton(withTitle: RCLocalizedString("好"))
-            _ = alert.runModal()
+            fileLog.info("  no directory")
+            logger.debug("Cannot create iWork document: no directory URL")
             return
         }
 
         guard let templateURL = templateURL(for: kind) else {
-            let alert = NSAlert()
-            alert.messageText = String(format: RCLocalizedString("%@ 模板不可用"), kind.displayName)
-            alert.informativeText = String(format: RCLocalizedString("未找到 %@ 安装或模板文件。\n请从 App Store 安装 %@。"), kind.displayName, kind.displayName)
-            alert.addButton(withTitle: RCLocalizedString("好"))
-            _ = alert.runModal()
+            fileLog.info("  template not found for kind=\(kind.displayName)")
+            logger.info("iWork template not available for \(kind.displayName, privacy: .public)")
             return
         }
 
@@ -1220,18 +1165,12 @@ final class FinderSync: FIFinderSync {
             let createdURL = try FinderCommandHandler.createNewIWorkDocument(in: directoryURL, fileName: kind.defaultFileName, templateURL: templateURL)
             NSWorkspace.shared.activateFileViewerSelecting([createdURL])
         } catch {
-            let alert = NSAlert()
-            alert.messageText = RCLocalizedString("无法创建文件")
-            alert.informativeText = error.localizedDescription
-            alert.addButton(withTitle: RCLocalizedString("好"))
-            _ = alert.runModal()
-
-            self.logger.error("Create iWork file error: \(error.localizedDescription, privacy: .public)")
+            fileLog.info("  error=\(error.localizedDescription)")
+            logger.error("Create iWork file error: \(error.localizedDescription, privacy: .public)")
         }
     }
 
     private func createAndRevealFolder(folderName: String, sender: NSMenuItem) {
-        // AppKit UI must be on the main thread; Finder may invoke actions off-main.
         if !Thread.isMainThread {
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
@@ -1240,16 +1179,13 @@ final class FinderSync: FIFinderSync {
             return
         }
 
+        fileLog.info("▶ createAndRevealFolder folderName=\(folderName)")
+
         let directoryURL: URL? = lastMenuCreationDirectoryURL ?? urlFromRepresentedObject(sender.representedObject)
 
         guard let directoryURL else {
-            NSApp.activate(ignoringOtherApps: true)
-
-            let alert = NSAlert()
-            alert.messageText = RCLocalizedString("无法确定目录")
-            alert.informativeText = RCLocalizedString("Finder 没有提供当前目录（background menu 可能会这样）。\n\n请先在该窗口里点击一下文件列表再试，或对某个文件/文件夹右键。")
-            alert.addButton(withTitle: RCLocalizedString("好"))
-            _ = alert.runModal()
+            fileLog.info("  no directory")
+            logger.debug("Cannot create folder: no directory URL")
             return
         }
 
@@ -1259,13 +1195,8 @@ final class FinderSync: FIFinderSync {
             let createdURL = try FinderCommandHandler.createNewFolder(in: directoryURL, folderName: folderName)
             NSWorkspace.shared.activateFileViewerSelecting([createdURL])
         } catch {
-            let alert = NSAlert()
-            alert.messageText = RCLocalizedString("无法创建文件夹")
-            alert.informativeText = error.localizedDescription
-            alert.addButton(withTitle: RCLocalizedString("好"))
-            _ = alert.runModal()
-
-            self.logger.error("Create folder error: \(error.localizedDescription, privacy: .public)")
+            fileLog.info("  error=\(error.localizedDescription)")
+            logger.error("Create folder error: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -1278,19 +1209,23 @@ final class FinderSync: FIFinderSync {
             return
         }
 
+        fileLog.info("▶ createAndRevealPasteboardText")
+
         let directoryURL: URL? = lastMenuCreationDirectoryURL ?? urlFromRepresentedObject(sender.representedObject)
 
-        guard let directoryURL else { return }
+        guard let directoryURL else {
+            fileLog.info("  no directory")
+            return
+        }
 
         do {
+            fileLog.info("  calling createNewTextFileFromPasteboard")
             let createdURL = try FinderCommandHandler.createNewTextFileFromPasteboard(in: directoryURL)
+            fileLog.info("  success")
             NSWorkspace.shared.activateFileViewerSelecting([createdURL])
         } catch {
-            let alert = NSAlert()
-            alert.messageText = RCLocalizedString("无法粘贴")
-            alert.informativeText = error.localizedDescription
-            alert.addButton(withTitle: RCLocalizedString("好"))
-            _ = alert.runModal()
+            fileLog.info("  failed: \(error.localizedDescription)")
+            logger.error("Pasteboard text creation failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -1303,19 +1238,23 @@ final class FinderSync: FIFinderSync {
             return
         }
 
+        fileLog.info("▶ createAndRevealPasteboardPNG")
+
         let directoryURL: URL? = lastMenuCreationDirectoryURL ?? urlFromRepresentedObject(sender.representedObject)
 
-        guard let directoryURL else { return }
+        guard let directoryURL else {
+            fileLog.info("  no directory")
+            return
+        }
 
         do {
+            fileLog.info("  calling createNewPNGFileFromPasteboard")
             let createdURL = try FinderCommandHandler.createNewPNGFileFromPasteboard(in: directoryURL)
+            fileLog.info("  success")
             NSWorkspace.shared.activateFileViewerSelecting([createdURL])
         } catch {
-            let alert = NSAlert()
-            alert.messageText = RCLocalizedString("无法粘贴")
-            alert.informativeText = error.localizedDescription
-            alert.addButton(withTitle: RCLocalizedString("好"))
-            _ = alert.runModal()
+            fileLog.info("  failed: \(error.localizedDescription)")
+            logger.error("Pasteboard PNG creation failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -1329,34 +1268,31 @@ final class FinderSync: FIFinderSync {
             return
         }
 
+        fileLog.info("▶ createAndReveal fileName=\(fileName)")
+
         let directoryURL: URL? = lastMenuCreationDirectoryURL ?? urlFromRepresentedObject(sender.representedObject)
 
         guard let directoryURL else {
-            NSApp.activate(ignoringOtherApps: true)
-
-            let alert = NSAlert()
-            alert.messageText = RCLocalizedString("无法确定目录")
-            alert.informativeText = RCLocalizedString("Finder 没有提供当前目录（background menu 可能会这样）。\n\n请先在该窗口里点击一下文件列表再试，或对某个文件/文件夹右键。")
-            alert.addButton(withTitle: RCLocalizedString("好"))
-            _ = alert.runModal()
+            fileLog.info("  no directory")
+            logger.debug("Cannot determine directory for file creation")
             return
         }
 
         logger.info("create file \(fileName, privacy: .public) in \(directoryURL.path, privacy: .public)")
+        fileLog.info("  dir=\(directoryURL.path)")
 
         do {
+            fileLog.info("  calling createNewFile")
             let createdURL = try FinderCommandHandler.createNewFile(in: directoryURL, fileName: fileName)
+            fileLog.info("  success, revealing")
             NSWorkspace.shared.activateFileViewerSelecting([createdURL])
+            fileLog.info("  done reveal")
         } catch {
-            let alert = NSAlert()
-            alert.messageText = RCLocalizedString("无法创建文件")
-            alert.informativeText = error.localizedDescription
-            alert.addButton(withTitle: RCLocalizedString("好"))
-            _ = alert.runModal()
-
-            self.logger.error("Create file error: \(error.localizedDescription, privacy: .public)")
+            fileLog.info("  error=\(error.localizedDescription)")
+            logger.error("Create file error: \(error.localizedDescription, privacy: .public)")
         }
     }
 
+    // MARK: - End of class
 
 }

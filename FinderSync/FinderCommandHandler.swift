@@ -95,6 +95,23 @@ enum FinderCommandHandler {
         resolveInstalledApplicationURL(bundleIdCandidates: bundleIdCandidates) != nil
     }
 
+    /// Resolve an app URL for the given OpenWithSpec, falling back to the
+    /// shared App Group cache if NSWorkspace fails (common in sandboxed extensions).
+    static func resolveOpenWithAppURL(specId: String, bundleIdCandidates: [String]) -> URL? {
+        // Primary: NSWorkspace Launch Services lookup.
+        if let url = resolveInstalledApplicationURL(bundleIdCandidates: bundleIdCandidates) {
+            return url
+        }
+
+        // Fallback: pre-resolved cache from the main app (non-sandboxed).
+        if let cachedURL = OpenWithAppCache.cachedAppURL(for: specId) {
+            logger.debug("resolveOpenWith fallback cache specId=\(specId, privacy: .public) path=\(cachedURL.path, privacy: .public)")
+            return cachedURL
+        }
+
+        return nil
+    }
+
     static func openInApplication(bundleIdentifier: String, urls: [URL]) throws {
         guard !urls.isEmpty else { return }
 
@@ -132,13 +149,20 @@ enum FinderCommandHandler {
 
         let url = try createUniqueURL(in: directoryURL, fileName: trimmed)
 
+        // Try direct creation first.
         do {
             try FileManager.default.createDirectory(at: url, withIntermediateDirectories: false)
+            return url
         } catch {
-            throw NSError(domain: "RightClickBuddy", code: 11, userInfo: [NSLocalizedDescriptionKey: String(format: RCLocalizedString("Failed to create folder: %@"), error.localizedDescription)])
+            // Fallback to IPC for any error (sandbox EPERM, Cocoa 513, etc.).
         }
 
-        return url
+        // Fallback: ask main app to create the directory via IPC.
+        let createdPath = try IPCTcpClient.createDirectory(
+            directoryPath: directoryURL.path,
+            fileName: trimmed
+        )
+        return URL(fileURLWithPath: createdPath)
     }
 
     static func createNewTextFileFromPasteboard(in directoryURL: URL, fileName: String = "Clipboard.txt") throws -> URL {
@@ -150,12 +174,24 @@ enum FinderCommandHandler {
         let url = try createUniqueURL(in: directoryURL, fileName: fileName)
         let data = Data(text.utf8)
 
-        let ok = FileManager.default.createFile(atPath: url.path, contents: data, attributes: nil)
-        if !ok {
-            throw NSError(domain: "RightClickBuddy", code: 31, userInfo: [NSLocalizedDescriptionKey: RCLocalizedString("Failed to create file")])
+        // Try direct POSIX write first.
+        let fd = Darwin.creat(url.path, mode_t(0o644))
+        if fd >= 0 {
+            defer { Darwin.close(fd) }
+            data.withUnsafeBytes { buf in
+                _ = Darwin.write(fd, buf.baseAddress, buf.count)
+            }
+            return url
         }
 
-        return url
+        // Fallback: ask main app to create the file via IPC.
+        let createdPath = try IPCTcpClient.createFile(
+            directoryPath: directoryURL.path,
+            fileName: fileName,
+            contents: data,
+            fileMode: 0o644
+        )
+        return URL(fileURLWithPath: createdPath)
     }
 
     static func createNewPNGFileFromPasteboard(in directoryURL: URL, fileName: String = "Clipboard.png") throws -> URL {
@@ -171,13 +207,23 @@ enum FinderCommandHandler {
         }
 
         let url = try createUniqueURL(in: directoryURL, fileName: fileName)
+
+        // Try direct write first.
         do {
             try png.write(to: url, options: [.atomic])
+            return url
         } catch {
-            throw NSError(domain: "RightClickBuddy", code: 34, userInfo: [NSLocalizedDescriptionKey: String(format: RCLocalizedString("Failed to write image: %@"), error.localizedDescription)])
+            // Fallback to IPC.
         }
 
-        return url
+        // Fallback: ask main app to create the file via IPC.
+        let createdPath = try IPCTcpClient.createFile(
+            directoryPath: directoryURL.path,
+            fileName: url.lastPathComponent,
+            contents: png,
+            fileMode: 0o644
+        )
+        return URL(fileURLWithPath: createdPath)
     }
 
     static func createNewTemplateFile(in directoryURL: URL, fileName: String, contents: Data, posixPermissions: Int? = nil) throws -> URL {
@@ -188,22 +234,34 @@ enum FinderCommandHandler {
 
         let url = try createUniqueURL(in: directoryURL, fileName: trimmed)
 
-        var attributes: [FileAttributeKey: Any]? = nil
-        if let posixPermissions {
-            attributes = [.posixPermissions: posixPermissions]
+        let mode: mode_t = {
+            if let posixPermissions { return mode_t(posixPermissions) }
+            return 0o644
+        }()
+
+        // Try direct POSIX write first.
+        let fd = Darwin.creat(url.path, mode)
+        if fd >= 0 {
+            defer { Darwin.close(fd) }
+            if !contents.isEmpty {
+                contents.withUnsafeBytes { buf in
+                    _ = Darwin.write(fd, buf.baseAddress, buf.count)
+                }
+            }
+            return url
         }
 
-        let ok = FileManager.default.createFile(atPath: url.path, contents: contents, attributes: attributes)
-        if !ok {
-            throw NSError(domain: "RightClickBuddy", code: 42, userInfo: [NSLocalizedDescriptionKey: RCLocalizedString("Failed to create file")])
-        }
-
-        return url
+        // Fallback: ask main app to create the file via IPC.
+        let createdPath = try IPCTcpClient.createFile(
+            directoryPath: directoryURL.path,
+            fileName: trimmed,
+            contents: contents,
+            fileMode: UInt16(mode)
+        )
+        return URL(fileURLWithPath: createdPath)
     }
 
     static func createNewFile(in directoryURL: URL, fileName: String) throws -> URL {
-        let fileManager = FileManager.default
-
         let trimmed = fileName.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
             throw NSError(domain: "RightClickBuddy", code: 2, userInfo: [NSLocalizedDescriptionKey: RCLocalizedString(RCLocalizedString("Empty file name"))])
@@ -213,41 +271,70 @@ enum FinderCommandHandler {
         let hasExtension = trimmed.contains(".") && !trimmed.hasSuffix(".")
         let normalizedName = hasExtension ? trimmed : "\(trimmed).txt"
 
+        // Try direct POSIX write (works when sandbox allows it).
+        var writeData = Data()
+        var fileMode: UInt16 = 0o644
+        if fileName.hasSuffix(".sh") {
+            writeData = Data("#!/bin/zsh\n".utf8)
+            fileMode = 0o755
+        }
+
+        // Use createUniqueURL logic inline since we may need different URLs for direct vs IPC.
         let url = try createUniqueURL(in: directoryURL, fileName: normalizedName)
 
-        var contents = Data()
-        var attributes: [FileAttributeKey: Any]? = nil
-
-        if url.pathExtension.lowercased() == "sh" {
-            // Minimal template: shebang only
-            contents = Data("#!/bin/zsh\n".utf8)
-            // Make it executable
-            attributes = [.posixPermissions: 0o755]
+        let fd = Darwin.creat(url.path, mode_t(fileMode))
+        if fd >= 0 {
+            defer { Darwin.close(fd) }
+            if !writeData.isEmpty {
+                writeData.withUnsafeBytes { buf in
+                    _ = Darwin.write(fd, buf.baseAddress, buf.count)
+                }
+            }
+            return url
         }
 
-        let ok = fileManager.createFile(atPath: url.path, contents: contents, attributes: attributes)
-        if !ok {
-            throw NSError(domain: "RightClickBuddy", code: 1, userInfo: [NSLocalizedDescriptionKey: RCLocalizedString("Failed to create file")])
-        }
-
-        return url
+        // Direct write failed (sandbox EPERM). Fallback to IPC — ask the main app to create the file.
+        let createdPath = try IPCTcpClient.createFile(
+            directoryPath: directoryURL.path,
+            fileName: normalizedName,
+            contents: writeData,
+            fileMode: fileMode
+        )
+        return URL(fileURLWithPath: createdPath)
     }
 
     static func createNewIWorkDocument(in directoryURL: URL, fileName: String, templateURL: URL) throws -> URL {
         let url = try createUniqueURL(in: directoryURL, fileName: fileName)
+
+        // Try direct copy first.
         do {
             try FileManager.default.copyItem(at: templateURL, to: url)
+            return url
         } catch {
-            throw NSError(domain: "RightClickBuddy", code: 3, userInfo: [NSLocalizedDescriptionKey: String(format: RCLocalizedString("Failed to create iWork document: %@"), error.localizedDescription)])
+            // Fallback to IPC.
         }
-        return url
+
+        // Fallback: ask main app to copy the template via IPC.
+        let createdPath = try IPCTcpClient.copyItem(
+            sourcePath: templateURL.path,
+            directoryPath: directoryURL.path,
+            fileName: url.lastPathComponent
+        )
+        return URL(fileURLWithPath: createdPath)
     }
 
     static func createNewOfficeDocument(in directoryURL: URL, fileName: String, kind: String) throws -> URL {
         // kind: docx / xlsx / pptx
+        logger.debug("Creating Office document kind=\(kind, privacy: .public) fileName=\(fileName, privacy: .public)")
+
         let url = try createUniqueURL(in: directoryURL, fileName: fileName)
 
-        let tmp = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString, isDirectory: true)
+        // Use app group container for temp work (sandbox-safe for extensions)
+        guard let appGroupContainer = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.com.karry.RightClickBuddy") else {
+            throw NSError(domain: "RightClickBuddy", code: 5, userInfo: [NSLocalizedDescriptionKey: "App group container not available"])
+        }
+        let tmpDir = appGroupContainer.appendingPathComponent("tmp", isDirectory: true)
+        let tmp = tmpDir.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tmp) }
 
@@ -262,30 +349,30 @@ enum FinderCommandHandler {
             throw NSError(domain: "RightClickBuddy", code: 4, userInfo: [NSLocalizedDescriptionKey: String(format: RCLocalizedString("Unsupported office kind: %@"), kind)])
         }
 
-        // Zip the payload directory into the destination file.
-        try zipDirectory(tmp, to: url)
+        // Write zip to temp file in app group (sandbox-safe), then read the data.
+        let tmpZip = tmp.appendingPathComponent("archive.zip")
+        try ZipWriter.createArchive(from: tmp, to: tmpZip)
+        let zipData = try Data(contentsOf: tmpZip)
 
-        return url
-    }
-
-    private static func zipDirectory(_ directory: URL, to destination: URL) throws {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/zip")
-        task.currentDirectoryURL = directory
-        task.arguments = ["-r", destination.path, "."]
-
-        let pipe = Pipe()
-        task.standardOutput = pipe
-        task.standardError = pipe
-
-        try task.run()
-        task.waitUntilExit()
-
-        if task.terminationStatus != 0 {
-            let data = pipe.fileHandleForReading.readDataToEndOfFile()
-            let output = String(decoding: data, as: UTF8.self)
-            throw NSError(domain: "RightClickBuddy", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: output.isEmpty ? RCLocalizedString(RCLocalizedString("zip failed")) : output])
+        // Try direct POSIX write to destination.
+        let fd = Darwin.creat(url.path, mode_t(0o644))
+        if fd >= 0 {
+            defer { Darwin.close(fd) }
+            zipData.withUnsafeBytes { buf in
+                _ = Darwin.write(fd, buf.baseAddress, buf.count)
+            }
+            logger.debug("Office document created at \(url.path, privacy: .public)")
+            return url
         }
+
+        // Fallback: ask main app to write the zip via IPC.
+        let createdPath = try IPCTcpClient.createFile(
+            directoryPath: directoryURL.path,
+            fileName: url.lastPathComponent,
+            contents: zipData,
+            fileMode: 0o644
+        )
+        return URL(fileURLWithPath: createdPath)
     }
 
     private static func write(_ text: String, to url: URL) throws {

@@ -7,18 +7,32 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		03EF71AD4B3B9DE29136940F /* IPCTcpClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F01033C2E6975E8F32F6FA3F /* IPCTcpClient.swift */; };
 		0552D1C8989F0E5268B01C32 /* RCBSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0B75E3804BED976D27ECE52 /* RCBSettings.swift */; };
+		0C01DBC5FFC78B77FAD7C520 /* ZipWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAD98F416B00561BBE59126D /* ZipWriter.swift */; };
+		0D2A467CE55E19BAE971F7C5 /* IPCProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 835C65CD2D5A9138AC6A86E7 /* IPCProtocol.swift */; };
 		2628243097D1E35BD3204AF9 /* RightClickBuddyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D546B62BD85BCB3098350061 /* RightClickBuddyApp.swift */; };
+		29FE8E320FC035259912BF21 /* IPCProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 835C65CD2D5A9138AC6A86E7 /* IPCProtocol.swift */; };
+		374563362B60CB252A1D778F /* IPCTcpClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F01033C2E6975E8F32F6FA3F /* IPCTcpClient.swift */; };
 		3F06A914DB060878D1D64C54 /* RCBSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0B75E3804BED976D27ECE52 /* RCBSettings.swift */; };
+		43678E21F725FB155018D1E6 /* OpenWithAppCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34851C922DE6F2ACE8513968 /* OpenWithAppCache.swift */; };
 		5422BC5F76AC9F11E34FEA5C /* LanguageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3A48B1662EDEEB6DDF71215 /* LanguageManager.swift */; };
+		55DC2CD71E7D622699BEE0BB /* ZipWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAD98F416B00561BBE59126D /* ZipWriter.swift */; };
+		5B00B3CE08B017F0441D0601 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AC20BA1DB7D34F3B0F5EE34B /* Assets.xcassets */; };
+		5F5B3E61ECC112C9DCDD9231 /* IPCTcpServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97A6152ED07B6D0310C10546 /* IPCTcpServer.swift */; };
+		782CF0BAE2F183C8B1D71F54 /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30A1A98E5F3E2F7D272776C0 /* AppLogger.swift */; };
 		7857DAB2C4AD35CE328C2276 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 98C483CB5882C42D0DE77551 /* Localizable.strings */; };
 		857F855AFEF2FE243B8C9298 /* FinderCommandHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 333DB1ACA82D3DF013BD9B71 /* FinderCommandHandler.swift */; };
 		879391A44A427CD5A6CAA1DE /* LanguageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3A48B1662EDEEB6DDF71215 /* LanguageManager.swift */; };
 		8E451C88C3A87F0818C0BEF9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D81BCA9938635981DAAD6D8 /* AppDelegate.swift */; };
 		90C8785149737F2F3E77D558 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C925DB4EF2AAF9CD68B17941 /* SettingsView.swift */; };
+		94F615AE2267956DC3806330 /* OpenWithAppCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34851C922DE6F2ACE8513968 /* OpenWithAppCache.swift */; };
 		9703975EEAD48B688E670F78 /* FinderSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88EC6F45600305DB070980E4 /* FinderSync.swift */; };
+		A7F91316FA2D21C4830B942F /* ExtensionLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8AD1E5F080238E6957EC8B8 /* ExtensionLogger.swift */; };
 		BDE3D6F1455E3916830A1719 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 98C483CB5882C42D0DE77551 /* Localizable.strings */; };
 		BF419992A35DAF70D9D3C5F1 /* RightClickBuddyFinderSync.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D7ACD92EF1FFA5C83CCF797E /* RightClickBuddyFinderSync.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		D4961EF8FB01E4A9A1A53A59 /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30A1A98E5F3E2F7D272776C0 /* AppLogger.swift */; };
+		D845E480BCB96FCF97B147AA /* ExtensionLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8AD1E5F080238E6957EC8B8 /* ExtensionLogger.swift */; };
 		F81D8B748EA5E9F6A50287C9 /* LaunchAtLoginManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33C0171BB30402F03ED1C02D /* LaunchAtLoginManager.swift */; };
 /* End PBXBuildFile section */
 
@@ -49,19 +63,27 @@
 /* Begin PBXFileReference section */
 		04ADC9634FA2D03FA36C0773 /* RightClickBuddyFinderSync.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RightClickBuddyFinderSync.entitlements; sourceTree = "<group>"; };
 		1FA2194F10EC44BCDBD12E4A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		30A1A98E5F3E2F7D272776C0 /* AppLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
 		333DB1ACA82D3DF013BD9B71 /* FinderCommandHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderCommandHandler.swift; sourceTree = "<group>"; };
 		33C0171BB30402F03ED1C02D /* LaunchAtLoginManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginManager.swift; sourceTree = "<group>"; };
+		34851C922DE6F2ACE8513968 /* OpenWithAppCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenWithAppCache.swift; sourceTree = "<group>"; };
 		3D81BCA9938635981DAAD6D8 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		70EB9F293156D40C86D719FA /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		711A59C699B6DFDAE98579D8 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		835C65CD2D5A9138AC6A86E7 /* IPCProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IPCProtocol.swift; sourceTree = "<group>"; };
 		88EC6F45600305DB070980E4 /* FinderSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderSync.swift; sourceTree = "<group>"; };
+		97A6152ED07B6D0310C10546 /* IPCTcpServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IPCTcpServer.swift; sourceTree = "<group>"; };
 		A9AC63BB8ACD666BE338E99B /* RightClickBuddy.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RightClickBuddy.entitlements; sourceTree = "<group>"; };
+		AC20BA1DB7D34F3B0F5EE34B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C0B75E3804BED976D27ECE52 /* RCBSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RCBSettings.swift; sourceTree = "<group>"; };
 		C3A48B1662EDEEB6DDF71215 /* LanguageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageManager.swift; sourceTree = "<group>"; };
 		C925DB4EF2AAF9CD68B17941 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		D546B62BD85BCB3098350061 /* RightClickBuddyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RightClickBuddyApp.swift; sourceTree = "<group>"; };
 		D7ACD92EF1FFA5C83CCF797E /* RightClickBuddyFinderSync.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RightClickBuddyFinderSync.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E2B685D230ABA8329EFC79AB /* RightClickBuddy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RightClickBuddy.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E8AD1E5F080238E6957EC8B8 /* ExtensionLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionLogger.swift; sourceTree = "<group>"; };
+		EAD98F416B00561BBE59126D /* ZipWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZipWriter.swift; sourceTree = "<group>"; };
+		F01033C2E6975E8F32F6FA3F /* IPCTcpClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IPCTcpClient.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -69,6 +91,8 @@
 			isa = PBXGroup;
 			children = (
 				3D81BCA9938635981DAAD6D8 /* AppDelegate.swift */,
+				AC20BA1DB7D34F3B0F5EE34B /* Assets.xcassets */,
+				97A6152ED07B6D0310C10546 /* IPCTcpServer.swift */,
 				33C0171BB30402F03ED1C02D /* LaunchAtLoginManager.swift */,
 				A9AC63BB8ACD666BE338E99B /* RightClickBuddy.entitlements */,
 				D546B62BD85BCB3098350061 /* RightClickBuddyApp.swift */,
@@ -80,8 +104,14 @@
 		3865F058D2B3BAB351B648F9 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				30A1A98E5F3E2F7D272776C0 /* AppLogger.swift */,
+				E8AD1E5F080238E6957EC8B8 /* ExtensionLogger.swift */,
+				835C65CD2D5A9138AC6A86E7 /* IPCProtocol.swift */,
+				F01033C2E6975E8F32F6FA3F /* IPCTcpClient.swift */,
 				C3A48B1662EDEEB6DDF71215 /* LanguageManager.swift */,
+				34851C922DE6F2ACE8513968 /* OpenWithAppCache.swift */,
 				C0B75E3804BED976D27ECE52 /* RCBSettings.swift */,
+				EAD98F416B00561BBE59126D /* ZipWriter.swift */,
 				4D916CAECDA3226EA1558155 /* Localization */,
 			);
 			path = Shared;
@@ -176,10 +206,12 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					2461C05429B848D8C21DF113 = {
-						ProvisioningStyle = Manual;
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
 					};
 					2EBB7996F2CE8D6B8FE98C26 = {
-						ProvisioningStyle = Manual;
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
 					};
 				};
 			};
@@ -209,6 +241,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5B00B3CE08B017F0441D0601 /* Assets.xcassets in Resources */,
 				7857DAB2C4AD35CE328C2276 /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -229,11 +262,18 @@
 			buildActionMask = 2147483647;
 			files = (
 				8E451C88C3A87F0818C0BEF9 /* AppDelegate.swift in Sources */,
+				782CF0BAE2F183C8B1D71F54 /* AppLogger.swift in Sources */,
+				A7F91316FA2D21C4830B942F /* ExtensionLogger.swift in Sources */,
+				29FE8E320FC035259912BF21 /* IPCProtocol.swift in Sources */,
+				03EF71AD4B3B9DE29136940F /* IPCTcpClient.swift in Sources */,
+				5F5B3E61ECC112C9DCDD9231 /* IPCTcpServer.swift in Sources */,
 				879391A44A427CD5A6CAA1DE /* LanguageManager.swift in Sources */,
 				F81D8B748EA5E9F6A50287C9 /* LaunchAtLoginManager.swift in Sources */,
+				43678E21F725FB155018D1E6 /* OpenWithAppCache.swift in Sources */,
 				3F06A914DB060878D1D64C54 /* RCBSettings.swift in Sources */,
 				2628243097D1E35BD3204AF9 /* RightClickBuddyApp.swift in Sources */,
 				90C8785149737F2F3E77D558 /* SettingsView.swift in Sources */,
+				55DC2CD71E7D622699BEE0BB /* ZipWriter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -241,10 +281,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D4961EF8FB01E4A9A1A53A59 /* AppLogger.swift in Sources */,
+				D845E480BCB96FCF97B147AA /* ExtensionLogger.swift in Sources */,
 				857F855AFEF2FE243B8C9298 /* FinderCommandHandler.swift in Sources */,
 				9703975EEAD48B688E670F78 /* FinderSync.swift in Sources */,
+				0D2A467CE55E19BAE971F7C5 /* IPCProtocol.swift in Sources */,
+				374563362B60CB252A1D778F /* IPCTcpClient.swift in Sources */,
 				5422BC5F76AC9F11E34FEA5C /* LanguageManager.swift in Sources */,
+				94F615AE2267956DC3806330 /* OpenWithAppCache.swift in Sources */,
 				0552D1C8989F0E5268B01C32 /* RCBSettings.swift in Sources */,
+				0C01DBC5FFC78B77FAD7C520 /* ZipWriter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -304,11 +350,11 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "-";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -445,11 +491,11 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "-";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
