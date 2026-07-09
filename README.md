@@ -88,9 +88,10 @@ Apple Developer account.
 - **Menu doesn't appear** — enable the extension (see *Enable the Finder extension* above), then
   open Settings and click **Reload Finder Extension** (or run `bash scripts/dev-reload-findersync.sh`).
   Re-enabling in System Settings is sometimes needed after re-signing with a different identity.
-- **A custom scope folder shows the app's icon** — this is macOS marking folders the extension
-  watches (system folders like Downloads are exempt). The folder itself isn't modified; remove it
-  from **Settings ▸ Scope** to revert.
+- **A custom scope folder shows the app's icon** — macOS marks the *root* folders the extension
+  watches (system folders like Downloads, and your home `~`, are exempt). **Tip:** add a *parent*
+  folder to Scope instead of the specific one — e.g. add `~` to get the menu in every subfolder
+  (like `~/workPlace`) with no icon marker on any of them. The folder itself is never modified.
 - **Rebuilding after code changes** — just re-run `bash scripts/dev-deploy-adhoc.sh`.
 
 ## Scripts
