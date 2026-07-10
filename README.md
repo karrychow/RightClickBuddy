@@ -1,6 +1,19 @@
-# RightClickBuddy
+<p align="center">
+  <img src="logo.svg" width="128" alt="RightClickBuddy icon">
+</p>
 
-A lightweight macOS Finder extension that lets you build your own right-click menu — add custom actions, "Open With" shortcuts, and quick file operations, all configurable from a clean settings UI.
+<h1 align="center">RightClickBuddy</h1>
+
+<p align="center">
+  A lightweight macOS Finder extension that lets you build your own right-click menu —<br>
+  custom actions, "Open With" shortcuts, and quick file operations, all configurable from a clean settings UI.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/macOS-13.0+-blue" alt="macOS 13.0+">
+  <img src="https://img.shields.io/badge/Swift-5-orange" alt="Swift 5">
+  <img src="https://img.shields.io/badge/License-MIT-green" alt="MIT License">
+</p>
 
 > Native macOS app built with SwiftUI + FinderSync. No Electron, no background bloat.
 
