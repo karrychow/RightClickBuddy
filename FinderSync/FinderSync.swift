@@ -693,12 +693,13 @@ final class FinderSync: FIFinderSync {
         menu.addItem(NSMenuItem(title: RCLocalizedString("复制路径"), action: #selector(copyPath), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: RCLocalizedString("复制文件名"), action: #selector(copyFilename), keyEquivalent: ""))
 
-        let terminalDirItem = NSMenuItem(title: RCLocalizedString("在当前目录打开终端"), action: #selector(openTerminalHere(_:)), keyEquivalent: "")
+        let termName = settings.defaultTerminalSpec.title
+        let terminalDirItem = NSMenuItem(title: String(format: RCLocalizedString("在 %@ 打开当前目录"), termName), action: #selector(openTerminalHere(_:)), keyEquivalent: "")
         if let creationDirectory { terminalDirItem.representedObject = creationDirectory }
         terminalDirItem.isEnabled = (creationDirectory != nil)
         menu.addItem(terminalDirItem)
 
-        let terminalItem = NSMenuItem(title: RCLocalizedString("在终端打开"), action: #selector(openInTerminal(_:)), keyEquivalent: "")
+        let terminalItem = NSMenuItem(title: String(format: RCLocalizedString("在 %@ 打开"), termName), action: #selector(openInTerminal(_:)), keyEquivalent: "")
         if let url = targeted ?? selected?.first { terminalItem.representedObject = url }
         menu.addItem(terminalItem)
 
@@ -803,8 +804,10 @@ final class FinderSync: FIFinderSync {
     /// a folder to another app (NSWorkspace.open fails with a sandbox permission error).
     private func openInTerminalApp(_ url: URL) {
         let dir = url.hasDirectoryPath ? url : url.deletingLastPathComponent()
-        guard let terminalURL = FinderCommandHandler.resolveInstalledApplicationURL(bundleIdCandidates: ["com.apple.Terminal"]) else {
-            logger.error("openInTerminal: Terminal.app not found")
+        // Use the user's chosen default terminal, falling back to the system Terminal.app.
+        let candidates = RCBSettings.loadCached().defaultTerminalSpec.bundleIdCandidates + ["com.apple.Terminal"]
+        guard let terminalURL = FinderCommandHandler.resolveInstalledApplicationURL(bundleIdCandidates: candidates) else {
+            logger.error("openInTerminal: no terminal app found")
             return
         }
         openURLs([dir], inAppAt: terminalURL, context: "terminal")

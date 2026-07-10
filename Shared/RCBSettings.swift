@@ -113,6 +113,10 @@ struct RCBSettings: Codable, Equatable {
     /// Per-openWith enable flags by OpenWithSpec.id.
     var openWith: [String: Bool] = [:]
 
+    /// OpenWithSpec.id of the terminal used by the top-level "Open in Terminal" menu items.
+    /// Optional for backward-compatible decoding of older settings files (nil → Terminal.app).
+    var defaultTerminalSpecId: String?
+
     static let appSupportFolderName = "RightClickBuddy"
     static let settingsFileName = "settings.json"
 
@@ -213,6 +217,18 @@ struct RCBSettings: Codable, Equatable {
     /// All template specs: built-in + user-defined.
     var allTemplateSpecs: [TemplateSpec] {
         Self.templateSpecs + customTemplateSpecs
+    }
+
+    /// Terminal apps selectable as the default terminal (the "Terminal" category).
+    static var terminalSpecs: [OpenWithSpec] {
+        openWithSpecs.filter { $0.category == "Terminal" }
+    }
+
+    /// The terminal chosen for the top-level "Open in Terminal" items (falls back to Terminal.app).
+    var defaultTerminalSpec: OpenWithSpec {
+        let id = defaultTerminalSpecId ?? "openwith.terminal"
+        return Self.openWithSpecs.first { $0.id == id }
+            ?? Self.openWithSpecs.first { $0.id == "openwith.terminal" }!
     }
 
     // MARK: - Custom Template CRUD

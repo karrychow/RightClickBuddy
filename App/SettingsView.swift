@@ -403,6 +403,10 @@ struct SettingsView: View {
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
 
+            defaultTerminalCard
+                .padding(.horizontal, 20)
+                .padding(.bottom, 10)
+
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     openWithToggles
@@ -410,6 +414,36 @@ struct SettingsView: View {
             }
 
             settingsFooter
+        }
+    }
+
+    /// Terminal apps that are actually installed (Terminal.app is always present).
+    private var installedTerminalSpecs: [RCBSettings.OpenWithSpec] {
+        RCBSettings.terminalSpecs.filter { spec in
+            spec.bundleIdCandidates.contains { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) != nil }
+        }
+    }
+
+    /// Picker for the terminal used by the top-level "Open in Terminal" menu items.
+    private var defaultTerminalCard: some View {
+        SectionCard {
+            SectionHeader(icon: "terminal", title: RCLocalizedString("默认终端"))
+
+            Picker(selection: Binding(
+                get: { settings.defaultTerminalSpec.id },
+                set: { newValue in
+                    settings.defaultTerminalSpecId = newValue
+                    saveSettings()
+                }
+            )) {
+                ForEach(installedTerminalSpecs) { spec in
+                    Text(spec.title).tag(spec.id)
+                }
+            } label: {
+                EmptyView()
+            }
+            .pickerStyle(.menu)
+            .labelsHidden()
         }
     }
 
