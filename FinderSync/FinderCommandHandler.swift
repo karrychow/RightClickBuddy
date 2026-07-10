@@ -18,22 +18,6 @@ enum FinderCommandHandler {
         writeToPasteboard(names.joined(separator: "\n"))
     }
 
-    static func openInTerminal(_ url: URL) {
-        let directoryURL: URL
-        if url.hasDirectoryPath {
-            directoryURL = url
-        } else {
-            directoryURL = url.deletingLastPathComponent()
-        }
-
-        guard let terminalURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Terminal") else {
-            return
-        }
-
-        let config = NSWorkspace.OpenConfiguration()
-        NSWorkspace.shared.open([directoryURL], withApplicationAt: terminalURL, configuration: config)
-    }
-
     private static func resolveInstalledApplicationURLImpl(bundleIdCandidates: [String]) -> URL? {
         for bundleId in bundleIdCandidates {
             if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId) {

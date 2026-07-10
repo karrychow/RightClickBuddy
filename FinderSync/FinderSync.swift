@@ -560,14 +560,6 @@ final class FinderSync: FIFinderSync {
             if settings.menu.showTemplates {
                 let templatesMenu = NSMenu(title: RCLocalizedString("模板"))
 
-                #if DEBUG
-                if let creationDirectory {
-                    let dirItem = NSMenuItem(title: String(format: RCLocalizedString("目录: %@"), creationDirectory.path), action: nil, keyEquivalent: "")
-                    dirItem.isEnabled = false
-                    templatesMenu.addItem(dirItem)
-                }
-                #endif
-
                 for (idx, spec) in settings.allTemplateSpecs.enumerated() {
                     guard settings.isTemplateEnabled(spec.id) else { continue }
 
@@ -623,14 +615,6 @@ final class FinderSync: FIFinderSync {
         // Open With
         if settings.menu.showOpenWith {
             let openWithMenu = NSMenu(title: RCLocalizedString("打开方式"))
-
-            #if DEBUG
-            if let creationDirectory {
-                let dirItem = NSMenuItem(title: String(format: RCLocalizedString("目录: %@"), creationDirectory.path), action: nil, keyEquivalent: "")
-                dirItem.isEnabled = false
-                openWithMenu.addItem(dirItem)
-            }
-            #endif
 
             let openWithSpecs = RCBSettings.openWithSpecs
             logger.info("openWith menu build specsCount=\(openWithSpecs.count)")
@@ -806,17 +790,24 @@ final class FinderSync: FIFinderSync {
 
     @objc private func openTerminalHere(_ sender: NSMenuItem) {
         guard let directoryURL = lastMenuCreationDirectoryURL ?? urlFromRepresentedObject(sender.representedObject) else { return }
-        FinderCommandHandler.openInTerminal(directoryURL)
+        openInTerminalApp(directoryURL)
     }
 
     @objc private func openInTerminal(_ sender: NSMenuItem) {
-        if let url = sender.representedObject as? URL {
-            FinderCommandHandler.openInTerminal(url)
+        guard let url = (sender.representedObject as? URL) ?? currentTargetURL() else { return }
+        openInTerminalApp(url)
+    }
+
+    /// Open the containing folder in Terminal. Like Open With, this is delegated to the
+    /// non-sandboxed main app over IPC — the sandboxed extension itself isn't allowed to hand
+    /// a folder to another app (NSWorkspace.open fails with a sandbox permission error).
+    private func openInTerminalApp(_ url: URL) {
+        let dir = url.hasDirectoryPath ? url : url.deletingLastPathComponent()
+        guard let terminalURL = FinderCommandHandler.resolveInstalledApplicationURL(bundleIdCandidates: ["com.apple.Terminal"]) else {
+            logger.error("openInTerminal: Terminal.app not found")
             return
         }
-
-        guard let url = currentTargetURL() else { return }
-        FinderCommandHandler.openInTerminal(url)
+        openURLs([dir], inAppAt: terminalURL, context: "terminal")
     }
 
     private func showAlert(messageText: String, informativeText: String) {
