@@ -94,6 +94,14 @@ Apple Developer account.
   (like `~/workPlace`) with no icon marker on any of them. The folder itself is never modified.
 - **Rebuilding after code changes** — just re-run `bash scripts/dev-deploy-adhoc.sh`.
 
+## Versioning
+
+- **Version (`MARKETING_VERSION` in `project.yml`)** — semantic, bumped by hand per release:
+  minor (`1.1.0`) for new features, patch (`1.0.1`) for fixes.
+- **Build number** — derived automatically from the git commit count at build time
+  (injected by the build scripts), so every commit produces a distinct, traceable build.
+- The running version shows at the bottom of the Settings window, e.g. `v1.1.0 (85)`.
+
 ## Scripts
 
 | Script | What it does |

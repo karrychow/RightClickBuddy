@@ -678,7 +678,7 @@ struct SettingsView: View {
 
                 Spacer()
 
-                Text("RightClickBuddy v\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?")")
+                Text("RightClickBuddy v\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?") (\(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?"))")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }

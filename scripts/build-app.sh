@@ -11,12 +11,16 @@ EXPORT_PATH="$BUILD_DIR/export"
 rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 
+# Build number = git commit count (monotonic, reproducible per commit).
+BUILD_NUMBER=$(git -C "$ROOT_DIR" rev-list --count HEAD 2>/dev/null || echo 1)
+
 xcodebuild \
   -project "$PROJECT" \
   -scheme "$SCHEME" \
   -configuration Release \
   -destination "platform=macOS,arch=arm64" \
   -archivePath "$ARCHIVE_PATH" \
+  CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
   archive -quiet
 
 # For unsigned/self-use builds we can take the .app directly from the archive.

@@ -18,10 +18,14 @@ INSTALL_APP="/Applications/$SCHEME.app"
 EXT_ID="com.karry.RightClickBuddy.FinderSync"
 LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
 
-echo "==> 1/5  Build single binary (ENABLE_DEBUG_DYLIB=NO), unsigned"
+# Build number = git commit count (monotonic, reproducible per commit).
+BUILD_NUMBER=$(git -C "$ROOT_DIR" rev-list --count HEAD 2>/dev/null || echo 1)
+
+echo "==> 1/5  Build single binary (ENABLE_DEBUG_DYLIB=NO), unsigned  [build $BUILD_NUMBER]"
 xcodebuild -project "$PROJECT" -scheme "$SCHEME" -configuration Debug \
   -derivedDataPath "$DERIVED" -destination "platform=macOS" \
-  CODE_SIGNING_ALLOWED=NO ENABLE_DEBUG_DYLIB=NO build >/dev/null
+  CODE_SIGNING_ALLOWED=NO ENABLE_DEBUG_DYLIB=NO \
+  CURRENT_PROJECT_VERSION="$BUILD_NUMBER" build >/dev/null
 echo "    built: $APP"
 
 echo "==> 2/5  Ad-hoc sign (extension + app, with entitlements)"

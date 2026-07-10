@@ -8,6 +8,9 @@ DERIVED_DATA="$ROOT_DIR/.build/DerivedData"
 
 mkdir -p "$DERIVED_DATA"
 
+# Build number = git commit count (monotonic, reproducible per commit).
+BUILD_NUMBER=$(git -C "$ROOT_DIR" rev-list --count HEAD 2>/dev/null || echo 1)
+
 xcodebuild \
   -project "$PROJECT" \
   -scheme "$SCHEME" \
@@ -16,6 +19,7 @@ xcodebuild \
   -destination "platform=macOS" \
   CODE_SIGNING_ALLOWED=NO \
   ENABLE_DEBUG_DYLIB=NO \
+  CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
   build
 
 APP_PATH="$DERIVED_DATA/Build/Products/Debug/$SCHEME.app"
