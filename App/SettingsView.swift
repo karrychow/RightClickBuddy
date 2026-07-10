@@ -132,8 +132,8 @@ struct SettingsView: View {
             openWithTab
                 .tabItem { Label(RCLocalizedString("打开方式"), systemImage: "arrow.up.forward.app") }
 
-            tipsTab
-                .tabItem { Label(RCLocalizedString("提示"), systemImage: "info.circle") }
+            generalTab
+                .tabItem { Label(RCLocalizedString("通用"), systemImage: "gearshape") }
         }
         .padding(16)
         .frame(width: 740, height: 640)
@@ -148,10 +148,8 @@ struct SettingsView: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(spacing: 16) {
-                    languageCard
                     menuCard
                     scopeCard
-                    extensionCard
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 16)
@@ -194,9 +192,6 @@ struct SettingsView: View {
                 ToggleRow(icon: "doc.text", label: RCLocalizedString("显示 Templates"), isOn: bindingForShowTemplates())
                 ToggleRow(icon: "doc.fill", label: RCLocalizedString("显示 Office"), isOn: bindingForShowOffice())
                 ToggleRow(icon: "arrow.up.forward.app", label: RCLocalizedString("显示 Open With"), isOn: bindingForShowOpenWith())
-                Divider()
-                    .padding(.leading, 30)
-                ToggleRow(icon: "menubar.rectangle", label: RCLocalizedString("显示菜单栏图标"), isOn: bindingForShowMenuBarIcon())
             }
         }
     }
@@ -448,63 +443,83 @@ struct SettingsView: View {
     }
 
 
-    // MARK: - Tips Tab
+    // MARK: - General Tab
 
-    private var tipsTab: some View {
+    private var generalTab: some View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(spacing: 16) {
-                    SectionCard {
-                        SectionHeader(icon: "app.gift", title: "RightClickBuddy")
-
-                        HStack(spacing: 10) {
-                            Image(systemName: "hand.point.right")
-                                .font(.body)
-                                .foregroundStyle(.tint)
-                                .frame(width: 20)
-                            Text(RCLocalizedString("Finder 右键增强"))
-                                .font(.body)
-                        }
-                    }
-
-                    SectionCard {
-                        SectionHeader(icon: "lightbulb", title: RCLocalizedString("提示"))
-
-                        VStack(alignment: .leading, spacing: 12) {
-                            TipRow(icon: "arrow.triangle.2.circlepath",
-                                   text: RCLocalizedString("修改设置后，重新打开 Finder 右键菜单即可生效。"))
-                            TipRow(icon: "terminal",
-                                   text: RCLocalizedString("若 Finder 未刷新，可在主 App 菜单里 Reload Finder Extension（Debug）或运行 scripts/dev-reload-findersync.sh。"))
-                            TipRow(icon: "gearshape.2",
-                                   text: RCLocalizedString("Finder 扩展启用位置：系统设置 → 通用 → 登录项与扩展 → 扩展。"))
-                        }
-                    }
-
-                    SectionCard {
-                        SectionHeader(icon: "arrow.counterclockwise", title: RCLocalizedString("恢复默认设置"))
-
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(RCLocalizedString("遇到异常行为时，可尝试恢复所有设置为默认值。此操作不可撤销。"))
-                                .font(.callout)
-                                .foregroundStyle(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-
-                            Button(RCLocalizedString("恢复默认"), role: .destructive) {
-                                settings = RCBSettings.defaultSettings
-                                saveSettings()
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .controlSize(.small)
-                            .tint(.red)
-                        }
-                    }
-
+                    languageCard
+                    appPreferencesCard
+                    extensionCard
+                    restoreDefaultsCard
                     logCard
+                    aboutCard
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 16)
             }
             settingsFooter
+        }
+    }
+
+    /// App-level preferences: menu-bar presence + launch at login.
+    private var appPreferencesCard: some View {
+        SectionCard {
+            SectionHeader(icon: "app.badge", title: RCLocalizedString("应用"))
+
+            VStack(spacing: 4) {
+                ToggleRow(icon: "menubar.rectangle", label: RCLocalizedString("显示菜单栏图标"), isOn: bindingForShowMenuBarIcon())
+                ToggleRow(icon: "power", label: RCLocalizedString("开机启动"), isOn: Binding(
+                    get: { LaunchAtLoginManager.isEnabled },
+                    set: { LaunchAtLoginManager.setEnabled($0) }
+                ))
+            }
+        }
+    }
+
+    private var restoreDefaultsCard: some View {
+        SectionCard {
+            SectionHeader(icon: "arrow.counterclockwise", title: RCLocalizedString("恢复默认设置"))
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text(RCLocalizedString("遇到异常行为时，可尝试恢复所有设置为默认值。此操作不可撤销。"))
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Button(RCLocalizedString("恢复默认"), role: .destructive) {
+                    settings = RCBSettings.defaultSettings
+                    saveSettings()
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+                .tint(.red)
+            }
+        }
+    }
+
+    private var aboutCard: some View {
+        SectionCard {
+            SectionHeader(icon: "app.gift", title: "RightClickBuddy")
+
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 10) {
+                    Image(systemName: "hand.point.right")
+                        .font(.body)
+                        .foregroundStyle(.tint)
+                        .frame(width: 20)
+                    Text(RCLocalizedString("Finder 右键增强"))
+                        .font(.body)
+                }
+
+                Divider()
+
+                TipRow(icon: "arrow.triangle.2.circlepath",
+                       text: RCLocalizedString("修改设置后，重新打开 Finder 右键菜单即可生效。"))
+                TipRow(icon: "gearshape.2",
+                       text: RCLocalizedString("Finder 扩展启用位置：系统设置 → 通用 → 登录项与扩展 → 扩展。"))
+            }
         }
     }
 
