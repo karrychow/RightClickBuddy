@@ -11,6 +11,7 @@ private struct SectionCard<Content: View>: View {
             content
         }
         .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 10)
                 .fill(Color(.controlBackgroundColor))
@@ -188,10 +189,14 @@ struct SettingsView: View {
                 ToggleRow(icon: "switch.2", label: RCLocalizedString("启用 Finder 菜单"), isOn: bindingForMenuEnabled())
                 Divider()
                     .padding(.leading, 30)
-                ToggleRow(icon: "plus.square", label: RCLocalizedString("显示 New"), isOn: bindingForShowNew())
-                ToggleRow(icon: "doc.text", label: RCLocalizedString("显示 Templates"), isOn: bindingForShowTemplates())
-                ToggleRow(icon: "doc.fill", label: RCLocalizedString("显示 Office"), isOn: bindingForShowOffice())
-                ToggleRow(icon: "arrow.up.forward.app", label: RCLocalizedString("显示 Open With"), isOn: bindingForShowOpenWith())
+                Group {
+                    ToggleRow(icon: "plus.square", label: RCLocalizedString("显示 New"), isOn: bindingForShowNew())
+                    ToggleRow(icon: "doc.text", label: RCLocalizedString("显示 Templates"), isOn: bindingForShowTemplates())
+                    ToggleRow(icon: "doc.fill", label: RCLocalizedString("显示 Office"), isOn: bindingForShowOffice())
+                    ToggleRow(icon: "arrow.up.forward.app", label: RCLocalizedString("显示 Open With"), isOn: bindingForShowOpenWith())
+                }
+                .disabled(!settings.menu.enabled)
+                .opacity(settings.menu.enabled ? 1 : 0.5)
             }
         }
     }
@@ -263,9 +268,8 @@ struct SettingsView: View {
                     settings.scopeRoots = []
                     RCBScopeRootBookmarkStore.removeAll()
                 }
-                .buttonStyle(.borderless)
+                .buttonStyle(.link)
                 .controlSize(.small)
-                .foregroundStyle(.secondary)
             }
 
             if let scopeRootsError {
@@ -412,11 +416,29 @@ struct SettingsView: View {
         }
     }
 
+    /// Whether any of the spec's candidate bundle IDs resolves to an installed app.
+    private func isInstalled(_ spec: RCBSettings.OpenWithSpec) -> Bool {
+        spec.bundleIdCandidates.contains { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) != nil }
+    }
+
+    /// The real icon for an installed app, or a faded placeholder when not installed.
+    @ViewBuilder
+    private func appIcon(for spec: RCBSettings.OpenWithSpec, installed: Bool) -> some View {
+        if installed,
+           let url = spec.bundleIdCandidates.lazy.compactMap({ NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) }).first {
+            Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+        } else {
+            Image(systemName: "app.dashed")
+                .font(.body)
+                .foregroundStyle(.tertiary)
+        }
+    }
+
     /// Terminal apps that are actually installed (Terminal.app is always present).
     private var installedTerminalSpecs: [RCBSettings.OpenWithSpec] {
-        RCBSettings.terminalSpecs.filter { spec in
-            spec.bundleIdCandidates.contains { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) != nil }
-        }
+        RCBSettings.terminalSpecs.filter { isInstalled($0) }
     }
 
     /// Picker for the terminal used by the top-level "Open in Terminal" menu items.
@@ -697,24 +719,32 @@ struct SettingsView: View {
         return ForEach(filtered, id: \.0) { category, specs in
             DisclosureGroup {
                 VStack(spacing: 2) {
-                    ForEach(specs) { spec in
-                        let installed = spec.bundleIdCandidates.contains { bundleId in
-                            NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId) != nil
-                        }
+                    // Installed apps first, then not-installed.
+                    ForEach(specs.sorted { isInstalled($0) && !isInstalled($1) }) { spec in
+                        let installed = isInstalled(spec)
 
                         HStack(spacing: 10) {
-                            Image(systemName: "app")
-                                .font(.body)
-                                .foregroundStyle(installed ? .secondary : .tertiary)
-                                .frame(width: 20)
+                            appIcon(for: spec, installed: installed)
+                                .frame(width: 18, height: 18)
+
                             Text(spec.title + (installed ? "" : RCLocalizedString(" (未安装)")))
                                 .font(.body)
                                 .foregroundStyle(installed ? .primary : .tertiary)
+
                             Spacer()
-                            Toggle("", isOn: bindingForOpenWith(id: spec.id))
-                                .toggleStyle(.switch)
-                                .controlSize(.small)
-                                .disabled(!installed)
+
+                            // Not-installed apps show a clearly-off, disabled switch (never a
+                            // misleading faded-on state).
+                            if installed {
+                                Toggle("", isOn: bindingForOpenWith(id: spec.id))
+                                    .toggleStyle(.switch)
+                                    .controlSize(.small)
+                            } else {
+                                Toggle("", isOn: .constant(false))
+                                    .toggleStyle(.switch)
+                                    .controlSize(.small)
+                                    .disabled(true)
+                            }
                         }
                         .padding(.vertical, 3)
                         .padding(.horizontal, 8)
@@ -722,7 +752,7 @@ struct SettingsView: View {
                             RoundedRectangle(cornerRadius: 6)
                                 .fill(Color(.windowBackgroundColor))
                         )
-                        .opacity(installed ? 1 : 0.6)
+                        .opacity(installed ? 1 : 0.55)
                     }
                 }
                 .padding(.vertical, 4)
@@ -1046,9 +1076,9 @@ struct TemplateEditView: View {
                 .font(.headline)
 
             Form {
-                TextField(RCLocalizedString("标题（显示名称）"), text: $spec.title)
-                TextField(RCLocalizedString("文件名"), text: $spec.fileName)
-                TextField(RCLocalizedString("分类"), text: $displayCategory)
+                TextField(RCLocalizedString("标题"), text: $spec.title, prompt: Text(RCLocalizedString("显示名称")))
+                TextField(RCLocalizedString("文件名"), text: $spec.fileName, prompt: Text("README.md"))
+                TextField(RCLocalizedString("分类"), text: $displayCategory, prompt: Text("DevOps"))
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(RCLocalizedString("模板内容"))
