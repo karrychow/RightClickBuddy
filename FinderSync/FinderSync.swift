@@ -656,26 +656,30 @@ final class FinderSync: FIFinderSync {
 
                 openWithMenu.addItem(folderItem)
 
-                let selectionItem = NSMenuItem(
-                    title: String(format: RCLocalizedString("在 %@ 打开选择项"), displayName),
-                    action: #selector(openSelectionInOpenWithApp(_:)),
-                    keyEquivalent: ""
-                )
-                selectionItem.tag = idx
-                selectionItem.identifier = NSUserInterfaceItemIdentifier(spec.id)
-                selectionItem.representedObject = creationDirectory
+                // A terminal only ever "opens a directory", so "Open Selection" resolves to the
+                // same thing as "Open Folder" — skip it for terminals and keep just one item.
+                if spec.category != "Terminal" {
+                    let selectionItem = NSMenuItem(
+                        title: String(format: RCLocalizedString("在 %@ 打开选择项"), displayName),
+                        action: #selector(openSelectionInOpenWithApp(_:)),
+                        keyEquivalent: ""
+                    )
+                    selectionItem.tag = idx
+                    selectionItem.identifier = NSUserInterfaceItemIdentifier(spec.id)
+                    selectionItem.representedObject = creationDirectory
 
-                let hasSelection = !lastMenuSelectedURLs.isEmpty
-                if spec.id == "openwith.obsidian" {
-                    // Obsidian cannot open arbitrary folders reliably; only enable when selection contains files.
-                    let hasFileSelection = lastMenuSelectedURLs.contains { !$0.hasDirectoryPath }
-                    selectionItem.isEnabled = hasFileSelection
+                    let hasSelection = !lastMenuSelectedURLs.isEmpty
+                    if spec.id == "openwith.obsidian" {
+                        // Obsidian cannot open arbitrary folders reliably; only enable when selection contains files.
+                        let hasFileSelection = lastMenuSelectedURLs.contains { !$0.hasDirectoryPath }
+                        selectionItem.isEnabled = hasFileSelection
 
-                } else {
-                    selectionItem.isEnabled = hasSelection || (creationDirectory != nil)
+                    } else {
+                        selectionItem.isEnabled = hasSelection || (creationDirectory != nil)
+                    }
+
+                    openWithMenu.addItem(selectionItem)
                 }
-
-                openWithMenu.addItem(selectionItem)
             }
 
             if !openWithMenu.items.isEmpty {
