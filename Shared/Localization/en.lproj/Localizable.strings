@@ -138,6 +138,26 @@
 "通用" = "General";
 "应用" = "App";
 "显示名称" = "Display Name";
+
+// Settings UI overhaul
+"Finder 扩展" = "Finder Extension";
+"打开系统扩展设置…" = "Open Extension Settings…";
+"重载 Finder 扩展" = "Reload Finder Extension";
+"检测中…" = "Checking…";
+"扩展已启用" = "Extension Enabled";
+"扩展未启用" = "Extension Not Enabled";
+"右键菜单不可用。请在系统设置中启用 Finder 扩展。" = "The context menu is unavailable. Enable the Finder extension in System Settings.";
+"隐藏后，可通过 Dock 图标重新打开设置。" = "When hidden, reopen Settings from the Dock icon.";
+"所有设置（包括生效目录、默认终端与各项开关）将恢复为默认值。此操作不可撤销。" = "All settings (scope, default terminal, and every toggle) will be reset to defaults. This cannot be undone.";
+"默认在以下目录（及其子目录）生效：" = "Active in these folders (and their subfolders) by default:";
+"已设置自定义目录：菜单仅在所列目录（及其子目录）中显示，默认目录不再生效。" = "Custom scope: the menu only appears in the folders listed above (and their subfolders). The default folders no longer apply.";
+"Finder 菜单已停用，以下配置暂不会生效。" = "The Finder menu is disabled — these settings have no effect right now.";
+"「%@」菜单当前已隐藏，以下配置暂不会生效。" = "The “%@” menu is hidden — these settings have no effect right now.";
+"去开启" = "Turn On";
+"全部启用" = "Enable All";
+"全部禁用" = "Disable All";
+"用于右键菜单中的「在 %@ 打开」。" = "Used by “Open in %@” in the context menu.";
+"基础文件" = "Essentials";
 "菜单项" = "Menu Items";
 
 // ============================

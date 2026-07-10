@@ -121,6 +121,12 @@ struct SettingsView: View {
     @State private var categoryToDelete = ""
 
     @State private var expandedCategories: Set<String> = []
+    @State private var owExpandedCategories: Set<String> = []
+
+    /// nil = still checking; true/false = pluginkit election state.
+    @State private var extensionEnabled: Bool? = nil
+    @State private var showResetConfirm = false
+    @State private var showLogs = false
 
     var body: some View {
         TabView {
@@ -206,12 +212,24 @@ struct SettingsView: View {
             SectionHeader(icon: "folder", title: RCLocalizedString("生效目录"))
 
             if settings.scopeRoots.isEmpty {
-                HStack(spacing: 8) {
-                    Image(systemName: "info.circle")
-                        .foregroundStyle(.tertiary)
-                    Text(RCLocalizedString("默认范围：Home + 常用用户目录。"))
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(RCLocalizedString("默认在以下目录（及其子目录）生效："))
                         .font(.callout)
                         .foregroundStyle(.secondary)
+
+                    ForEach(["~/Desktop", "~/Downloads", "~/Movies", "~/Music", "~/Pictures"], id: \.self) { path in
+                        HStack(spacing: 10) {
+                            Image(systemName: "folder")
+                                .font(.body)
+                                .foregroundStyle(.tertiary)
+                                .frame(width: 20)
+                            Text(path)
+                                .font(.body.monospacedDigit())
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.vertical, 2)
+                        .padding(.horizontal, 8)
+                    }
                 }
                 .padding(.bottom, 12)
             } else {
@@ -251,6 +269,17 @@ struct SettingsView: View {
                                 .padding(.leading, 30)
                         }
                     }
+
+                    HStack(alignment: .top, spacing: 6) {
+                        Image(systemName: "info.circle")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                        Text(RCLocalizedString("已设置自定义目录：菜单仅在所列目录（及其子目录）中显示，默认目录不再生效。"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.top, 8)
                 }
                 .padding(.bottom, 12)
             }
@@ -287,26 +316,81 @@ struct SettingsView: View {
 
     // MARK: - Extension Management
 
-    private var extensionCard: some View {
+    /// Extension health: live pluginkit election status + the enable/reload tools.
+    /// This is the first thing a user needs to see — "no menu in Finder" is the #1 issue.
+    private var finderExtensionCard: some View {
         SectionCard {
-            SectionHeader(icon: "gearshape", title: "Finder Extension")
+            SectionHeader(icon: "puzzlepiece.extension", title: RCLocalizedString("Finder 扩展"))
 
             VStack(alignment: .leading, spacing: 10) {
-                Button("Open Extension Settings…") {
-                    if let url = URL(string: "x-apple.systempreferences:com.apple.LoginItems-Settings.extension") {
-                        NSWorkspace.shared.open(url)
-                    }
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(extensionEnabled == nil ? Color.gray : (extensionEnabled! ? Color.green : Color.red))
+                        .frame(width: 9, height: 9)
+                    Text(extensionEnabled == nil
+                         ? RCLocalizedString("检测中…")
+                         : (extensionEnabled! ? RCLocalizedString("扩展已启用") : RCLocalizedString("扩展未启用")))
+                        .font(.body)
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
 
-                Button("Reload Finder Extension") {
-                    reloadFinderExtensionAction()
+                if extensionEnabled == false {
+                    Text(RCLocalizedString("右键菜单不可用。请在系统设置中启用 Finder 扩展。"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                .tint(.accentColor)
+
+                HStack(spacing: 10) {
+                    if extensionEnabled == false {
+                        Button(RCLocalizedString("打开系统扩展设置…")) { openSystemExtensionSettings() }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.small)
+                    } else {
+                        Button(RCLocalizedString("打开系统扩展设置…")) { openSystemExtensionSettings() }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                    }
+
+                    Button(RCLocalizedString("重载 Finder 扩展")) {
+                        reloadFinderExtensionAction()
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
             }
+        }
+        .task {
+            while !Task.isCancelled {
+                refreshExtensionStatus()
+                try? await Task.sleep(nanoseconds: 3_000_000_000)
+            }
+        }
+    }
+
+    private func openSystemExtensionSettings() {
+        if let url = URL(string: "x-apple.systempreferences:com.apple.LoginItems-Settings.extension") {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    /// Query pluginkit for the extension's election state ('+' prefix = enabled).
+    private func refreshExtensionStatus() {
+        DispatchQueue.global(qos: .utility).async {
+            let task = Process()
+            task.executableURL = URL(fileURLWithPath: "/usr/bin/pluginkit")
+            task.arguments = ["-m", "-i", "com.karry.RightClickBuddy.FinderSync"]
+            let pipe = Pipe()
+            task.standardOutput = pipe
+            task.standardError = Pipe()
+            var enabled = false
+            do {
+                try task.run()
+                task.waitUntilExit()
+                let out = String(decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+                enabled = out.trimmingCharacters(in: .whitespaces).hasPrefix("+")
+            } catch {
+                enabled = false
+            }
+            DispatchQueue.main.async { extensionEnabled = enabled }
         }
     }
 
@@ -333,6 +417,10 @@ struct SettingsView: View {
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
+
+            hiddenGroupBanner(groupVisible: settings.menu.showTemplates, groupName: RCLocalizedString("模板")) {
+                settings.menu.showTemplates = true
+            }
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
@@ -402,6 +490,10 @@ struct SettingsView: View {
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
 
+            hiddenGroupBanner(groupVisible: settings.menu.showOpenWith, groupName: RCLocalizedString("打开方式")) {
+                settings.menu.showOpenWith = true
+            }
+
             defaultTerminalCard
                 .padding(.horizontal, 20)
                 .padding(.bottom, 10)
@@ -413,6 +505,11 @@ struct SettingsView: View {
             }
 
             settingsFooter
+        }
+        .onAppear {
+            if owExpandedCategories.isEmpty {
+                owExpandedCategories = Set(RCBSettings.openWithSpecs.map(\.category))
+            }
         }
     }
 
@@ -461,6 +558,11 @@ struct SettingsView: View {
             }
             .pickerStyle(.menu)
             .labelsHidden()
+
+            Text(String(format: RCLocalizedString("用于右键菜单中的「在 %@ 打开」。"), settings.defaultTerminalSpec.title))
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .padding(.top, 6)
         }
     }
 
@@ -471,11 +573,11 @@ struct SettingsView: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(spacing: 16) {
-                    languageCard
+                    finderExtensionCard
                     appPreferencesCard
-                    extensionCard
-                    restoreDefaultsCard
+                    languageCard
                     logCard
+                    restoreDefaultsCard
                     aboutCard
                 }
                 .padding(.horizontal, 20)
@@ -490,8 +592,12 @@ struct SettingsView: View {
         SectionCard {
             SectionHeader(icon: "app.badge", title: RCLocalizedString("应用"))
 
-            VStack(spacing: 4) {
+            VStack(alignment: .leading, spacing: 4) {
                 ToggleRow(icon: "menubar.rectangle", label: RCLocalizedString("显示菜单栏图标"), isOn: bindingForShowMenuBarIcon())
+                Text(RCLocalizedString("隐藏后，可通过 Dock 图标重新打开设置。"))
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .padding(.leading, 30)
                 ToggleRow(icon: "power", label: RCLocalizedString("开机启动"), isOn: Binding(
                     get: { LaunchAtLoginManager.isEnabled },
                     set: { LaunchAtLoginManager.setEnabled($0) }
@@ -511,13 +617,21 @@ struct SettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 Button(RCLocalizedString("恢复默认"), role: .destructive) {
-                    settings = RCBSettings.defaultSettings
-                    saveSettings()
+                    showResetConfirm = true
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.small)
                 .tint(.red)
             }
+        }
+        .alert(RCLocalizedString("恢复默认设置"), isPresented: $showResetConfirm) {
+            Button(RCLocalizedString("取消"), role: .cancel) { }
+            Button(RCLocalizedString("恢复默认"), role: .destructive) {
+                settings = RCBSettings.defaultSettings
+                saveSettings()
+            }
+        } message: {
+            Text(RCLocalizedString("所有设置（包括生效目录、默认终端与各项开关）将恢复为默认值。此操作不可撤销。"))
         }
     }
 
@@ -561,9 +675,44 @@ struct SettingsView: View {
                             .foregroundStyle(.red)
                     }
                 }
+
+                Spacer()
+
+                Text("RightClickBuddy v\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?")")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
+        }
+    }
+
+    // MARK: - Hidden-Group Banner
+
+    /// Shown at the top of the Templates / Open With tabs when that menu group (or the whole
+    /// Finder menu) is switched off — otherwise users tweak toggles here and see no effect.
+    @ViewBuilder
+    private func hiddenGroupBanner(groupVisible: Bool, groupName: String, enable: @escaping () -> Void) -> some View {
+        if !settings.menu.enabled || !groupVisible {
+            HStack(spacing: 8) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+                Text(!settings.menu.enabled
+                     ? RCLocalizedString("Finder 菜单已停用，以下配置暂不会生效。")
+                     : String(format: RCLocalizedString("「%@」菜单当前已隐藏，以下配置暂不会生效。"), groupName))
+                    .font(.callout)
+                    .lineLimit(2)
+                Spacer()
+                Button(RCLocalizedString("去开启")) {
+                    settings.menu.enabled = true
+                    enable()
+                }
+                .controlSize(.small)
+            }
+            .padding(10)
+            .background(RoundedRectangle(cornerRadius: 8).fill(Color.orange.opacity(0.12)))
+            .padding(.horizontal, 20)
+            .padding(.bottom, 8)
         }
     }
 
@@ -617,6 +766,7 @@ struct SettingsView: View {
                 .padding(.leading, 8)
                 .padding(.vertical, 4)
             } label: {
+                let enabledCount = specs.filter { settings.isTemplateEnabled($0.id) }.count
                 HStack(spacing: 8) {
                     Image(systemName: "folder")
                         .font(.caption)
@@ -624,8 +774,18 @@ struct SettingsView: View {
                     Text(RCLocalizedString(category))
                         .font(.body)
                         .fontWeight(.medium)
+                    Text("\(enabledCount)/\(specs.count)")
+                        .font(.caption)
+                        .foregroundStyle(enabledCount > 0 ? .secondary : .tertiary)
                     Spacer()
                     Menu {
+                        Button(RCLocalizedString("全部启用")) {
+                            for spec in specs { settings.templates[spec.id] = true }
+                        }
+                        Button(RCLocalizedString("全部禁用")) {
+                            for spec in specs { settings.templates[spec.id] = false }
+                        }
+                        Divider()
                         Button(RCLocalizedString("重命名分类")) {
                             categoryToRename = category
                             newCategoryName = RCLocalizedString(category)
@@ -717,7 +877,10 @@ struct SettingsView: View {
             }.sorted { $0.0 < $1.0 }
         }
         return ForEach(filtered, id: \.0) { category, specs in
-            DisclosureGroup {
+            DisclosureGroup(isExpanded: Binding(
+                get: { owExpandedCategories.contains(category) },
+                set: { if $0 { owExpandedCategories.insert(category) } else { owExpandedCategories.remove(category) } }
+            )) {
                 VStack(spacing: 2) {
                     // Installed apps first, then not-installed.
                     ForEach(specs.sorted { isInstalled($0) && !isInstalled($1) }) { spec in
@@ -758,6 +921,8 @@ struct SettingsView: View {
                 .padding(.vertical, 4)
                 .padding(.leading, 4)
             } label: {
+                let installed = specs.filter { isInstalled($0) }
+                let enabledCount = installed.filter { settings.isOpenWithEnabled($0.id) }.count
                 HStack(spacing: 8) {
                     Image(systemName: "folder")
                         .font(.caption)
@@ -765,6 +930,25 @@ struct SettingsView: View {
                     Text(RCLocalizedString(category))
                         .font(.body)
                         .fontWeight(.medium)
+                    Text("\(enabledCount)/\(installed.count)")
+                        .font(.caption)
+                        .foregroundStyle(enabledCount > 0 ? .secondary : .tertiary)
+                    Spacer()
+                    Menu {
+                        Button(RCLocalizedString("全部启用")) {
+                            for spec in installed { settings.openWith[spec.id] = true }
+                        }
+                        Button(RCLocalizedString("全部禁用")) {
+                            for spec in specs { settings.openWith[spec.id] = false }
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .menuIndicator(.hidden)
+                    .fixedSize()
                 }
             }
             .padding(.vertical, 4)
@@ -780,8 +964,22 @@ struct SettingsView: View {
 
     private var logCard: some View {
         SectionCard {
-            SectionHeader(icon: "doc.text.magnifyingglass", title: RCLocalizedString("日志"))
+            // Collapsed by default — logs are a support tool, not everyday content.
+            Button {
+                withAnimation { showLogs.toggle() }
+            } label: {
+                HStack(spacing: 6) {
+                    SectionHeader(icon: "doc.text.magnifyingglass", title: RCLocalizedString("日志"))
+                    Spacer()
+                    Image(systemName: showLogs ? "chevron.down" : "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
 
+            if showLogs {
             VStack(alignment: .leading, spacing: 8) {
                 // Toolbar
                 HStack(spacing: 8) {
@@ -864,9 +1062,14 @@ struct SettingsView: View {
                     )
                 }
             }
+            }
         }
         .task {
             await refreshLogsLoop()
+        }
+        .onAppear {
+            // Surface crash info immediately instead of hiding it behind the fold.
+            if AppLogger.hasPendingCrashReport() { showLogs = true }
         }
         .onDisappear {
             logTimer?.cancel()
