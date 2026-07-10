@@ -53,6 +53,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func buildMenu() -> NSMenu {
         let menu = NSMenu()
 
+        let aboutItem = NSMenuItem(title: RCLocalizedString("关于 RightClickBuddy"), action: #selector(showAboutPanel), keyEquivalent: "")
+        aboutItem.target = self
+        menu.addItem(aboutItem)
+
+        menu.addItem(NSMenuItem.separator())
+
         let settingsItem = NSMenuItem(title: RCLocalizedString("设置"), action: #selector(openSettings), keyEquivalent: ",")
         settingsItem.target = self
         menu.addItem(settingsItem)
@@ -266,6 +272,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if response == .alertFirstButtonReturn {
             NSWorkspace.shared.open(URL(fileURLWithPath: "/Applications", isDirectory: true))
         }
+    }
+
+    @objc private func showAboutPanel() {
+        // Standard macOS About panel (icon, name, version, copyright) — the usual stand-in
+        // for the app menu's About item in a menu-bar-only app.
+        NSApp.activate(ignoringOtherApps: true)
+        NSApp.orderFrontStandardAboutPanel(nil)
     }
 
     @objc private func quitApp() {

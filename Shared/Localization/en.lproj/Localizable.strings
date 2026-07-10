@@ -158,6 +158,8 @@
 "全部禁用" = "Disable All";
 "用于右键菜单中的「在 %@ 打开」。" = "Used by “Open in %@” in the context menu.";
 "基础文件" = "Essentials";
+"关于" = "About";
+"关于 RightClickBuddy" = "About RightClickBuddy";
 "菜单项" = "Menu Items";
 
 // ============================

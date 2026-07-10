@@ -637,16 +637,37 @@ struct SettingsView: View {
 
     private var aboutCard: some View {
         SectionCard {
-            SectionHeader(icon: "app.gift", title: "RightClickBuddy")
+            SectionHeader(icon: "info.circle", title: RCLocalizedString("关于"))
 
             VStack(alignment: .leading, spacing: 12) {
-                HStack(spacing: 10) {
-                    Image(systemName: "hand.point.right")
-                        .font(.body)
-                        .foregroundStyle(.tint)
-                        .frame(width: 20)
-                    Text(RCLocalizedString("Finder 右键增强"))
-                        .font(.body)
+                HStack(spacing: 12) {
+                    Image(nsImage: NSApp.applicationIconImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 44, height: 44)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("RightClickBuddy")
+                            .font(.body.weight(.semibold))
+                        Text(RCLocalizedString("Finder 右键增强"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text("v\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?") (\(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?")) · MIT License")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+
+                    Spacer()
+
+                    Button {
+                        if let url = URL(string: "https://github.com/karrychow/RightClickBuddy") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    } label: {
+                        Label("GitHub", systemImage: "link")
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
                 }
 
                 Divider()
