@@ -84,7 +84,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func refreshMenuState() {
-        guard let items = statusItem.menu?.items else { return }
+        // statusItem is nil while the menu-bar icon is hidden — bail out safely
+        // (avoids a force-unwrap crash when toggling the icon off).
+        guard let items = statusItem?.menu?.items else { return }
         for item in items {
             if item.action == #selector(toggleLaunchAtLogin) {
                 item.state = LaunchAtLoginManager.isEnabled ? .on : .off
