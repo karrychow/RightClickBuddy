@@ -694,13 +694,8 @@ final class FinderSync: FIFinderSync {
         menu.addItem(NSMenuItem(title: RCLocalizedString("复制文件名"), action: #selector(copyFilename), keyEquivalent: ""))
 
         let termName = settings.defaultTerminalSpec.title
-        let terminalDirItem = NSMenuItem(title: String(format: RCLocalizedString("在 %@ 打开当前目录"), termName), action: #selector(openTerminalHere(_:)), keyEquivalent: "")
-        if let creationDirectory { terminalDirItem.representedObject = creationDirectory }
-        terminalDirItem.isEnabled = (creationDirectory != nil)
-        menu.addItem(terminalDirItem)
-
         let terminalItem = NSMenuItem(title: String(format: RCLocalizedString("在 %@ 打开"), termName), action: #selector(openInTerminal(_:)), keyEquivalent: "")
-        if let url = targeted ?? selected?.first { terminalItem.representedObject = url }
+        if let url = (targeted ?? selected?.first) ?? creationDirectory { terminalItem.representedObject = url }
         menu.addItem(terminalItem)
 
 
@@ -789,13 +784,8 @@ final class FinderSync: FIFinderSync {
         FinderCommandHandler.copyFilenames(urls)
     }
 
-    @objc private func openTerminalHere(_ sender: NSMenuItem) {
-        guard let directoryURL = lastMenuCreationDirectoryURL ?? urlFromRepresentedObject(sender.representedObject) else { return }
-        openInTerminalApp(directoryURL)
-    }
-
     @objc private func openInTerminal(_ sender: NSMenuItem) {
-        guard let url = (sender.representedObject as? URL) ?? currentTargetURL() else { return }
+        guard let url = (sender.representedObject as? URL) ?? currentTargetURL() ?? lastMenuCreationDirectoryURL else { return }
         openInTerminalApp(url)
     }
 

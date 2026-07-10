@@ -48,9 +48,6 @@
 "复制当前目录" = "Copy Current Directory";
 "复制路径" = "Copy Path";
 "复制文件名" = "Copy Filename";
-"在当前目录打开终端" = "Open Terminal Here";
-"在终端打开" = "Open in Terminal";
-"在 %@ 打开当前目录" = "Open Current Folder in %@";
 "在 %@ 打开" = "Open in %@";
 "默认终端" = "Default Terminal";
 "目录: %@" = "Directory: %@";
